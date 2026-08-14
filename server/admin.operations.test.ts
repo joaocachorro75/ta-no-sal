@@ -1,0 +1,87 @@
+import { afterAll, describe, expect, it } from "vitest";
+import { appRouter } from "./routers";
+import type { TrpcContext } from "./_core/context";
+
+const suffix = Date.now();
+const categoryName = `Categoria de teste ${suffix}`;
+const establishmentName = `Parceiro demo de teste ${suffix}`;
+let categoryId: number | null = null;
+let establishmentId: number | null = null;
+let subscriptionId: number | null = null;
+let featuredSlotId: number | null = null;
+
+function createAdminContext(): TrpcContext {
+  const now = new Date();
+  return {
+    user: { id: 0, openId: "test-admin", name: "Administrador de teste", email: "test@tonosal.local", loginMethod: "test", role: "admin", createdAt: now, updatedAt: now, lastSignedIn: now },
+    req: { protocol: "https", headers: {} } as TrpcContext["req"],
+    res: {} as TrpcContext["res"],
+  };
+}
+
+describe("operações administrativas", () => {
+  const caller = appRouter.createCaller(createAdminContext());
+
+  it("administra categoria, parceiro, planos, mensalidade e destaque", async () => {
+    await caller.admin.createCategory({ name: categoryName, icon: "Store" });
+    let overview = await caller.admin.overview();
+    const category = overview.categories.find(item => item.name === categoryName);
+    expect(category).toBeDefined();
+    categoryId = category!.id;
+
+    await caller.admin.updateCategory({ id: categoryId, name: `${categoryName} atualizada`, isActive: true });
+    overview = await caller.admin.overview();
+    const updatedCategory = overview.categories.find(item => item.id === categoryId);
+    expect(updatedCategory?.name).toContain("atualizada");
+
+    await caller.admin.createEstablishment({
+      categoryId,
+      name: establishmentName,
+      description: "Parceiro usado exclusivamente para validar as operações administrativas do Tô no Sal.",
+      whatsapp: "5591999999999",
+      streetAddress: "Endereço de teste",
+      neighborhood: "Atalaia",
+      city: "Salinópolis",
+      latitude: -0.61,
+      longitude: -47.35,
+      isDeliveryOnly: false,
+      isActive: true,
+      isDemo: true,
+      images: [],
+    });
+    overview = await caller.admin.overview();
+    const establishment = overview.establishments.find(item => item.name === establishmentName);
+    expect(establishment).toBeDefined();
+    establishmentId = establishment!.id;
+
+    await caller.admin.updateEstablishment({ id: establishmentId, isActive: false });
+    overview = await caller.admin.overview();
+    expect(overview.establishments.find(item => item.id === establishmentId)?.isActive).toBe(false);
+    await caller.admin.updateEstablishment({ id: establishmentId, isActive: true });
+
+    const basicPlan = overview.plans.find(plan => plan.code === "basico")!;
+    const highlightedPlan = overview.plans.find(plan => plan.code === "semana")!;
+    await caller.admin.updatePlan({ id: basicPlan.id, priceCents: basicPlan.priceCents + 1, isActive: true });
+    await caller.admin.updatePlan({ id: basicPlan.id, priceCents: basicPlan.priceCents, isActive: basicPlan.isActive });
+
+    await caller.admin.createSubscription({ establishmentId, planId: basicPlan.id, amountCents: 9900, dueAt: new Date(), status: "pendente", notes: "Teste automatizado" });
+    overview = await caller.admin.overview();
+    const subscription = overview.subscriptions.find(item => item.establishmentId === establishmentId && item.notes === "Teste automatizado");
+    expect(subscription).toBeDefined();
+    subscriptionId = subscription!.id;
+    await caller.admin.updateSubscriptionStatus({ id: subscriptionId, status: "pago", paidAt: new Date() });
+
+    await caller.admin.createFeaturedSlot({ establishmentId, planId: highlightedPlan.id, startsAt: new Date(), endsAt: new Date(Date.now() + 86400000), displayOrder: 99 });
+    overview = await caller.admin.overview();
+    const featured = overview.featuredSlots.find(item => item.establishmentId === establishmentId && item.displayOrder === 99);
+    expect(featured).toBeDefined();
+    featuredSlotId = featured!.id;
+    await caller.admin.updateFeaturedSlotStatus({ id: featuredSlotId, isActive: false });
+  });
+});
+
+afterAll(async () => {
+  const caller = appRouter.createCaller(createAdminContext());
+  if (establishmentId) await caller.admin.deleteEstablishment({ id: establishmentId });
+  if (categoryId) await caller.admin.deleteCategory({ id: categoryId });
+});

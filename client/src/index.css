@@ -140,6 +140,23 @@
   }
 }
 
+.leaflet-container {
+  font-family: "DM Sans", sans-serif;
+  background: #dcefed;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  box-shadow: 0 12px 28px rgba(6, 59, 67, 0.18);
+}
+
+.tide-lines {
+  background-image:
+    radial-gradient(ellipse 55% 105% at 50% 110%, transparent 66%, rgba(7, 60, 69, 0.34) 67%, transparent 68%),
+    radial-gradient(ellipse 58% 108% at 50% 110%, transparent 66%, rgba(11, 135, 147, 0.32) 67%, transparent 68%),
+    radial-gradient(ellipse 61% 111% at 50% 110%, transparent 66%, rgba(244, 207, 124, 0.48) 67%, transparent 68%);
+}
+
 @layer components {
   /**
    * Custom container utility that centers content and adds responsive padding.

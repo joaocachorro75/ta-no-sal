@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, like, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, like, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   categories,
@@ -149,6 +149,7 @@ export async function getPublicDirectory(input: { search?: string; categorySlug?
         latitude: establishments.latitude,
         longitude: establishments.longitude,
         isDeliveryOnly: establishments.isDeliveryOnly,
+        isDemo: establishments.isDemo,
         categoryName: categories.name,
         categorySlug: categories.slug,
         categoryIcon: categories.icon,
@@ -176,6 +177,7 @@ export async function getPublicFeatured() {
         latitude: establishments.latitude,
         longitude: establishments.longitude,
         isDeliveryOnly: establishments.isDeliveryOnly,
+        isDemo: establishments.isDemo,
         categoryName: categories.name,
         categoryIcon: categories.icon,
         planLabel: commercialPlans.label,
@@ -215,6 +217,7 @@ export async function getPublicEstablishment(slug: string) {
       latitude: establishments.latitude,
       longitude: establishments.longitude,
       isDeliveryOnly: establishments.isDeliveryOnly,
+      isDemo: establishments.isDemo,
       categoryName: categories.name,
       categoryIcon: categories.icon,
     })
@@ -252,6 +255,7 @@ export async function getAdminOverview() {
         longitude: establishments.longitude,
         isDeliveryOnly: establishments.isDeliveryOnly,
         isActive: establishments.isActive,
+        isDemo: establishments.isDemo,
       })
       .from(establishments)
       .innerJoin(categories, eq(establishments.categoryId, categories.id))
@@ -300,6 +304,7 @@ type EstablishmentInput = {
   longitude: number;
   isDeliveryOnly: boolean;
   isActive: boolean;
+  isDemo: boolean;
   images: { imageUrl: string; altText?: string | null }[];
 };
 
@@ -386,4 +391,39 @@ export async function updateFeaturedSlotStatus(input: { id: number; isActive: bo
   const db = await requireDb();
   const { id, ...data } = input;
   await db.update(featuredSlots).set(data).where(eq(featuredSlots.id, id));
+}
+
+export async function seedDemoDirectory() {
+  const db = await requireDb();
+  await ensureCommercialPlans();
+  const demoCategories = [
+    { name: "Alimentação", slug: "alimentacao", icon: "Utensils" },
+    { name: "Mercadinho", slug: "mercadinho", icon: "ShoppingBasket" },
+    { name: "Depósito", slug: "deposito", icon: "Package" },
+  ];
+  await db.insert(categories).values(demoCategories).onDuplicateKeyUpdate({ set: { updatedAt: new Date() } });
+  const categoryRows = await db.select().from(categories).where(inArray(categories.slug, demoCategories.map(category => category.slug)));
+  const categoryId = new Map(categoryRows.map(category => [category.slug, category.id]));
+  const demos = [
+    { categorySlug: "alimentacao", name: "Maré Alta Surf Café", slug: "mare-alta-surf-cafe", description: "Café de praia demonstrativo com bowls, cafés gelados e o clima leve de uma pausa depois do mar.", whatsapp: "559100000001", streetAddress: "Orla demonstrativa, 25", neighborhood: "Atalaia", city: "Salinópolis", latitude: -0.6064, longitude: -47.3578, isDeliveryOnly: false, isActive: true, isDemo: true, images: ["/manus-storage/demo-surf-cafe_ebeb5ac6.jpg", "/manus-storage/demo-acai-bowl_07297c78.jpg"] },
+    { categorySlug: "alimentacao", name: "Açaí da Vela", slug: "acai-da-vela", description: "Ponto demonstrativo para açaí, frutas e energia para aproveitar a praia até o pôr do sol.", whatsapp: "559100000002", streetAddress: "Rua da Praia, 80", neighborhood: "Maçarico", city: "Salinópolis", latitude: -0.6125, longitude: -47.3521, isDeliveryOnly: true, isActive: true, isDemo: true, images: ["/manus-storage/demo-acai-bowl_07297c78.jpg", "/manus-storage/demo-surf-cafe_ebeb5ac6.jpg"] },
+    { categorySlug: "mercadinho", name: "Mercado Pé na Areia", slug: "mercado-pe-na-areia", description: "Mercadinho demonstrativo com itens de conveniência, bebidas geladas e tudo para o fim de semana em Salinas.", whatsapp: "559100000003", streetAddress: "Av. do Farol, 198", neighborhood: "Centro", city: "Salinópolis", latitude: -0.6171, longitude: -47.3496, isDeliveryOnly: false, isActive: true, isDemo: true, images: ["/manus-storage/demo-mercado-praia_ba9c5fef.jpg", "/manus-storage/demo-surf-cafe_ebeb5ac6.jpg"] },
+  ];
+  for (const demo of demos) {
+    const categoryIdValue = categoryId.get(demo.categorySlug);
+    if (!categoryIdValue) continue;
+    const { categorySlug: _categorySlug, images, ...values } = demo;
+    await db.insert(establishments).values({ ...values, categoryId: categoryIdValue }).onDuplicateKeyUpdate({ set: { ...values, categoryId: categoryIdValue, updatedAt: new Date() } });
+    const [establishment] = await db.select({ id: establishments.id }).from(establishments).where(eq(establishments.slug, demo.slug)).limit(1);
+    if (establishment) await replaceEstablishmentImages(establishment.id, images.map((imageUrl, sortOrder) => ({ imageUrl, altText: `Imagem demonstrativa ${sortOrder + 1} de ${demo.name}` })));
+  }
+  const seeded = await db.select({ id: establishments.id }).from(establishments).where(inArray(establishments.slug, demos.map(demo => demo.slug)));
+  const [featuredPlan] = await db.select().from(commercialPlans).where(eq(commercialPlans.code, "semana")).limit(1);
+  if (featuredPlan && seeded[0]) {
+    const now = new Date();
+    const inThirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const [existing] = await db.select({ id: featuredSlots.id }).from(featuredSlots).where(and(eq(featuredSlots.establishmentId, seeded[0].id), eq(featuredSlots.planId, featuredPlan.id))).limit(1);
+    if (!existing) await db.insert(featuredSlots).values({ establishmentId: seeded[0].id, planId: featuredPlan.id, startsAt: now, endsAt: inThirtyDays, displayOrder: 1, isActive: true });
+  }
+  return { created: demos.length };
 }

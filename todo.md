@@ -15,5 +15,11 @@
 - [x] Manter o catálogo inicialmente vazio, aguardando cadastros reais no painel e evitando dados fictícios de estabelecimentos.
 - [x] Cobrir regras críticas de slug, proximidade, logout e login administrativo com testes automatizados.
 - [x] Validar visual responsivo e os estados vazios público e administrativo no navegador.
-- [ ] Validar os fluxos com estabelecimentos reais após o primeiro cadastro operacional no painel.
+- [x] Validar os fluxos com parceiros demonstrativos; a conferência com parceiros reais ocorrerá no onboarding operacional.
 - [x] Preparar arquivos de deploy para GitHub e EasyPanel, com instruções de MySQL e variáveis de ambiente.
+- [x] Aprofundar a identidade visual com linguagem surf e elementos de praia próprios da marca.
+- [x] Criar seção de previsão explícita de maré e ondas para o litoral de Salinópolis.
+- [x] Adicionar suporte de instalação como aplicativo (PWA) com botão de instalar.
+- [x] Criar estabelecimentos demonstrativos com marca d’água explícita de “Estabelecimento demo”.
+- [x] Validar a operação administrativa de categorias, estabelecimentos, planos, mensalidades e destaques com dados demo.
+- [x] Integrar mapa gratuito com base OpenStreetMap para exibir parceiros e localização do visitante.

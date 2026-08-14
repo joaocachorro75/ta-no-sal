@@ -70,6 +70,7 @@ export const establishments = mysqlTable(
     longitude: double("longitude").notNull(),
     isDeliveryOnly: boolean("isDeliveryOnly").default(false).notNull(),
     isActive: boolean("isActive").default(true).notNull(),
+    isDemo: boolean("isDemo").default(false).notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },

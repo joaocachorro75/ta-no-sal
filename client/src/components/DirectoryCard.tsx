@@ -17,6 +17,7 @@ export type DirectoryCardItem = {
   images: string[];
   distance?: number | null;
   planLabel?: string;
+  isDemo?: boolean;
 };
 
 export function formatDistance(distance?: number | null) {
@@ -47,6 +48,7 @@ export function DirectoryCard({ item, featured = false }: { item: DirectoryCardI
             <Sparkles className="h-3 w-3" /> Destaque {item.planLabel ? `· ${item.planLabel}` : ""}
           </span>
         )}
+        {item.isDemo && <span className="absolute right-[-2.9rem] top-5 rotate-45 bg-[#f4cf7c] px-10 py-1 text-[0.56rem] font-extrabold uppercase tracking-[0.12em] text-[#5a3b0b] shadow-sm">Estabelecimento demo</span>}
         <span className="absolute bottom-3 left-3 rounded-full bg-[#073c45]/85 px-2.5 py-1 text-[0.64rem] font-bold uppercase tracking-[0.1em] text-white backdrop-blur-sm">
           {item.categoryName}
         </span>

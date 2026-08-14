@@ -10,6 +10,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { saveEstablishmentImage } from "./appStorage";
+import { getBeachConditions } from "./beachConditions";
 
 const imageSchema = z.object({
   imageUrl: z.string().url(),
@@ -29,6 +30,7 @@ const establishmentSchema = z.object({
   longitude: z.number().min(-180).max(180),
   isDeliveryOnly: z.boolean().default(false),
   isActive: z.boolean().default(true),
+  isDemo: z.boolean().default(false),
   images: z.array(imageSchema).max(6).default([]),
 });
 
@@ -81,6 +83,15 @@ export const appRouter = router({
           .sign(localAdminSecret());
         return { token };
       }),
+  }),
+  beach: router({
+    conditions: publicProcedure.query(async () => {
+      try {
+        return await getBeachConditions();
+      } catch {
+        throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "As condições da praia estão temporariamente indisponíveis." });
+      }
+    }),
   }),
   directory: router({
     categories: publicProcedure.query(() => db.getPublicCategories()),
@@ -143,6 +154,7 @@ export const appRouter = router({
     updateFeaturedSlotStatus: adminProcedure
       .input(z.object({ id: z.number().int().positive(), isActive: z.boolean() }))
       .mutation(({ input }) => db.updateFeaturedSlotStatus(input)),
+    seedDemoDirectory: adminProcedure.mutation(() => db.seedDemoDirectory()),
   }),
 });
 

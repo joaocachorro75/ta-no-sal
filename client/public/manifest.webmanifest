@@ -1,0 +1,17 @@
+{
+  "name": "Tô no Sal",
+  "short_name": "Tô no Sal",
+  "description": "Descubra estabelecimentos em Salinópolis por proximidade.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f3ea",
+  "theme_color": "#063b43",
+  "icons": [
+    {
+      "src": "/manus-storage/to-no-sal-logo_bf6159c7.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
