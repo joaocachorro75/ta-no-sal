@@ -36,3 +36,6 @@
 - [x] Mover o carrossel de Destaques para acima da busca na página inicial.
 - [x] Manter busca, filtros e catálogo completo abaixo dos Destaques.
 - [x] Validar a nova hierarquia em desktop e celular.
+- [x] Criar navegação inferior fixa com Início, Mapa, Ondas e Maré e Área do parceiro.
+- [x] Simplificar os cabeçalhos públicos para priorizar a marca e o contexto da página.
+- [x] Validar o menu inferior em celular e desktop, incluindo espaço seguro no fim do conteúdo.

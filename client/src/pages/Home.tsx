@@ -1,9 +1,10 @@
 import { Brand } from "@/components/Brand";
 import { DirectoryCard, type DirectoryCardItem } from "@/components/DirectoryCard";
 import InstallAppButton from "@/components/InstallAppButton";
+import PublicBottomNav from "@/components/PublicBottomNav";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { Compass, Crosshair, Loader2, Map as MapIcon, MapPin, Search, Sparkles, Store, Waves, X } from "lucide-react";
+import { Compass, Crosshair, Loader2, MapPin, Search, Sparkles, Store, Waves, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -51,8 +52,8 @@ export default function Home() {
   useEffect(() => { locateVisitor(); }, []);
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#f7f3ea] text-[#063b43]">
-      <header className="absolute inset-x-0 top-0 z-20"><div className="container flex h-20 items-center justify-between"><Brand className="[&>div]:hidden sm:[&>div]:block" /><nav className="flex items-center gap-1 sm:gap-2"><Link href="/mapa" aria-label="Abrir mapa" className="inline-flex items-center gap-1 rounded-full border border-[#0b6876]/15 bg-white/65 px-2.5 py-2 text-xs font-bold text-[#0b6876] backdrop-blur-md transition hover:bg-white"><MapIcon className="h-3.5 w-3.5" /><span>Mapa</span></Link><Link href="/ondas-e-mare" aria-label="Abrir ondas e maré" className="inline-flex items-center gap-1 rounded-full border border-[#0b6876]/15 bg-white/65 px-2.5 py-2 text-xs font-bold text-[#0b6876] backdrop-blur-md transition hover:bg-white"><Waves className="h-3.5 w-3.5" /><span>Ondas</span><span className="hidden lg:inline">e Maré</span></Link><InstallAppButton /><Link href="/admin" className="rounded-full border border-[#0b6876]/15 bg-white/65 px-2.5 py-2 text-xs font-bold text-[#0b6876] backdrop-blur-md transition hover:bg-white"><span className="hidden sm:inline">Área do parceiro</span><span className="sm:hidden">Admin</span></Link></nav></div></header>
+    <main className="min-h-screen overflow-x-hidden bg-[#f7f3ea] pb-24 text-[#063b43] sm:pb-32">
+      <header className="absolute inset-x-0 top-0 z-20"><div className="container flex h-20 items-center justify-between"><Brand className="[&>div]:hidden sm:[&>div]:block" /><InstallAppButton /></div></header>
 
       <section className="relative isolate overflow-hidden bg-[#dcefed] pb-12 pt-28 sm:pb-16 sm:pt-32">
         <div className="absolute inset-0 -z-10 [background:radial-gradient(circle_at_86%_18%,rgba(255,216,142,0.8),transparent_15%),radial-gradient(circle_at_75%_65%,rgba(43,155,165,0.26),transparent_30%),linear-gradient(120deg,#eff8f5_0%,#d7eeeb_45%,#96d0d3_100%)]" />
@@ -76,6 +77,7 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-[#0b6976]/10 bg-[#073c45] py-10 text-white"><div className="container flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between"><Brand className="[&_p:first-child]:text-white [&_p:last-child]:text-[#a8d9d8]" /><p className="max-w-md text-sm leading-6 text-[#b9d7d5]">A vitrine local para aproveitar Salinópolis com mais praticidade.</p><a href="#explorar" className="inline-flex items-center gap-2 text-sm font-bold text-[#f4cf7c] hover:text-white"><MapPin className="h-4 w-4" /> Explorar Salinópolis</a></div></footer>
+      <PublicBottomNav />
     </main>
   );
 }

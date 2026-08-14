@@ -1,4 +1,5 @@
 import { BeachPlaceholder, Brand } from "@/components/Brand";
+import PublicBottomNav from "@/components/PublicBottomNav";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, ChevronLeft, ChevronRight, ImageOff, MapPin, Navigation, Phone, Share2 } from "lucide-react";
@@ -36,7 +37,7 @@ export default function EstablishmentDetail() {
   const next = () => setActiveImage(current => (current + 1) % gallery.length);
 
   return (
-    <main className="min-h-screen bg-[#f7f3ea] text-[#063b43]">
+    <main className="min-h-screen bg-[#f7f3ea] pb-24 text-[#063b43] sm:pb-32">
       <header className="sticky top-0 z-20 border-b border-[#0b6976]/10 bg-[#f7f3ea]/92 backdrop-blur-xl">
         <div className="container flex h-[4.7rem] items-center justify-between"><Link href="/" aria-label="Voltar ao início"><Brand compact /></Link><Button variant="ghost" size="sm" onClick={() => navigator.share?.({ title: establishment.name, url: window.location.href }).catch(() => toast("Link pronto para compartilhar"))} className="rounded-full text-[#0b6976]"><Share2 className="h-4 w-4" /> <span className="hidden sm:inline">Compartilhar</span></Button></div>
       </header>
@@ -59,6 +60,7 @@ export default function EstablishmentDetail() {
           </section>
         </div>
       </div>
+      <PublicBottomNav />
     </main>
   );
 }
