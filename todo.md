@@ -23,3 +23,6 @@
 - [x] Criar estabelecimentos demonstrativos com marca d’água explícita de “Estabelecimento demo”.
 - [x] Validar a operação administrativa de categorias, estabelecimentos, planos, mensalidades e destaques com dados demo.
 - [x] Integrar mapa gratuito com base OpenStreetMap para exibir parceiros e localização do visitante.
+- [x] Criar opções próprias de menu para Mapa e Ondas e Maré.
+- [x] Separar o mapa e as condições da praia da página inicial em páginas dedicadas.
+- [x] Validar a navegação reorganizada em viewport móvel, confirmando menu, links e layout em telas pequenas.

@@ -5,8 +5,10 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Admin from "./pages/Admin";
+import BeachPage from "./pages/BeachPage";
 import EstablishmentDetail from "./pages/EstablishmentDetail";
 import Home from "./pages/Home";
+import MapPage from "./pages/MapPage";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -14,6 +16,8 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/admin"} component={Admin} />
+      <Route path={"/mapa"} component={MapPage} />
+      <Route path={"/ondas-e-mare"} component={BeachPage} />
       <Route path={"/estabelecimento/:slug"} component={EstablishmentDetail} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

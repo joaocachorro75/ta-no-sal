@@ -1,11 +1,9 @@
 import { Brand } from "@/components/Brand";
-import BeachConditions from "@/components/BeachConditions";
 import { DirectoryCard, type DirectoryCardItem } from "@/components/DirectoryCard";
 import InstallAppButton from "@/components/InstallAppButton";
-import SurfMap from "@/components/SurfMap";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { Compass, Crosshair, Loader2, MapPin, Search, Sparkles, Store, Waves, X } from "lucide-react";
+import { Compass, Crosshair, Loader2, Map as MapIcon, MapPin, Search, Sparkles, Store, Waves, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -54,7 +52,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#f7f3ea] text-[#063b43]">
-      <header className="absolute inset-x-0 top-0 z-20"><div className="container flex h-20 items-center justify-between"><Brand /><div className="flex items-center gap-2"><InstallAppButton /><Link href="/admin" className="rounded-full border border-[#0b6876]/15 bg-white/65 px-3.5 py-2 text-xs font-bold text-[#0b6876] backdrop-blur-md transition hover:bg-white">Área do parceiro</Link></div></div></header>
+      <header className="absolute inset-x-0 top-0 z-20"><div className="container flex h-20 items-center justify-between"><Brand className="[&>div]:hidden sm:[&>div]:block" /><nav className="flex items-center gap-1 sm:gap-2"><Link href="/mapa" aria-label="Abrir mapa" className="inline-flex items-center gap-1 rounded-full border border-[#0b6876]/15 bg-white/65 px-2.5 py-2 text-xs font-bold text-[#0b6876] backdrop-blur-md transition hover:bg-white"><MapIcon className="h-3.5 w-3.5" /><span>Mapa</span></Link><Link href="/ondas-e-mare" aria-label="Abrir ondas e maré" className="inline-flex items-center gap-1 rounded-full border border-[#0b6876]/15 bg-white/65 px-2.5 py-2 text-xs font-bold text-[#0b6876] backdrop-blur-md transition hover:bg-white"><Waves className="h-3.5 w-3.5" /><span>Ondas</span><span className="hidden lg:inline">e Maré</span></Link><InstallAppButton /><Link href="/admin" className="rounded-full border border-[#0b6876]/15 bg-white/65 px-2.5 py-2 text-xs font-bold text-[#0b6876] backdrop-blur-md transition hover:bg-white"><span className="hidden sm:inline">Área do parceiro</span><span className="sm:hidden">Admin</span></Link></nav></div></header>
 
       <section className="relative isolate overflow-hidden bg-[#dcefed] pb-12 pt-28 sm:pb-16 sm:pt-32">
         <div className="absolute inset-0 -z-10 [background:radial-gradient(circle_at_86%_18%,rgba(255,216,142,0.8),transparent_15%),radial-gradient(circle_at_75%_65%,rgba(43,155,165,0.26),transparent_30%),linear-gradient(120deg,#eff8f5_0%,#d7eeeb_45%,#96d0d3_100%)]" />
@@ -69,8 +67,6 @@ export default function Home() {
       <section className="container pb-16 pt-8 sm:pb-24" id="explorar">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="text-xs font-extrabold uppercase tracking-[0.17em] text-[#d68d20]">Navegue do seu jeito</p><h2 className="mt-2 font-display text-3xl font-semibold tracking-[-0.045em] text-[#063b43]">O que tem perto?</h2></div>{position && <span className="inline-flex items-center gap-2 rounded-full bg-[#e8f5f2] px-3 py-2 text-xs font-bold text-[#0a7782]"><Compass className="h-3.5 w-3.5" /> Resultados por proximidade</span>}</div>
         <div className="mt-5 flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none]"><button onClick={() => setSelectedCategory(null)} className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-bold transition ${!selectedCategory ? "bg-[#073c45] text-white shadow-lg shadow-[#073c45]/15" : "bg-white text-[#37666d] ring-1 ring-[#0b6976]/10 hover:bg-[#eaf5f3]"}`}>Todos</button>{categories.map(category => <button key={category.id} onClick={() => setSelectedCategory(category.slug)} className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-bold transition ${selectedCategory === category.slug ? "bg-[#073c45] text-white shadow-lg shadow-[#073c45]/15" : "bg-white text-[#37666d] ring-1 ring-[#0b6976]/10 hover:bg-[#eaf5f3]"}`}>{category.name}</button>)}</div>
-
-        <div className="mt-8 grid gap-5 lg:grid-cols-[0.82fr_1.18fr]"><BeachConditions /><SurfMap places={nearbyDirectory} position={position} /></div>
 
         {nearbyFeatured.length > 0 && <div className="mt-10"><div className="mb-4 flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-full bg-[#ffe5aa] text-[#b47318]"><Sparkles className="h-4 w-4" /></span><div><p className="font-display text-2xl font-semibold tracking-[-0.04em] text-[#063b43]">Destaques</p><p className="text-xs text-[#6a898d]">Lugares em evidência no Tô no Sal.</p></div></div><div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">{nearbyFeatured.map(item => <DirectoryCard key={`featured-${item.id}`} item={item} featured />)}</div></div>}
 
