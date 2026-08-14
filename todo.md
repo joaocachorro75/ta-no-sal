@@ -39,3 +39,8 @@
 - [x] Criar navegação inferior fixa com Início, Mapa, Ondas e Maré e Área do parceiro.
 - [x] Simplificar os cabeçalhos públicos para priorizar a marca e o contexto da página.
 - [x] Validar o menu inferior em celular e desktop, incluindo espaço seguro no fim do conteúdo.
+- [x] Remover a busca textual da página inicial.
+- [x] Criar um banner principal rotativo com chamadas de praia e Salinópolis.
+- [x] Eliminar o espaço visual entre o hero e os Destaques.
+- [x] Posicionar o botão Usar minha localização abaixo das categorias.
+- [x] Validar a experiência nativa em celular e desktop.
