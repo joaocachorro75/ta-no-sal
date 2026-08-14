@@ -26,3 +26,9 @@
 - [x] Criar opções próprias de menu para Mapa e Ondas e Maré.
 - [x] Separar o mapa e as condições da praia da página inicial em páginas dedicadas.
 - [x] Validar a navegação reorganizada em viewport móvel, confirmando menu, links e layout em telas pequenas.
+- [x] Pesquisar e selecionar uma fonte pública apropriada para atualização contínua de ondas e maré em Salinópolis.
+- [x] Automatizar a atualização das condições marítimas com cache, tolerância a falhas e indicação de última atualização.
+- [x] Validar localmente a chamada automática e o snapshot de contingência sem intervenção administrativa.
+- [x] Documentar a configuração no EasyPanel da chamada periódica ao endpoint de renovação marítima após o primeiro deploy.
+- [x] Adiar a configuração e comprovação do agendamento ativo no EasyPanel até a publicação final, conforme decisão do usuário.
+- [x] Preparar no código e documentar a chamada periódica de renovação marítima para ativação futura no EasyPanel.

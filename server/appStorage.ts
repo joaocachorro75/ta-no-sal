@@ -1,9 +1,32 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { storagePut } from "./storage";
+import type { BeachConditions } from "./beachConditions";
 
 export function getUploadsDirectory() {
   return process.env.UPLOADS_DIR || path.resolve(process.cwd(), "uploads");
+}
+
+function marineSnapshotPath() {
+  return path.join(getUploadsDirectory(), "system", "marine-conditions.json");
+}
+
+export async function loadMarineSnapshot(): Promise<BeachConditions | null> {
+  try {
+    const parsed = JSON.parse(await readFile(marineSnapshotPath(), "utf8")) as BeachConditions;
+    if (!parsed || typeof parsed.lastFetchedAt !== "string" || parsed.source !== "Open-Meteo") return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveMarineSnapshot(data: BeachConditions) {
+  const target = marineSnapshotPath();
+  await mkdir(path.dirname(target), { recursive: true });
+  const temporary = `${target}.${crypto.randomUUID()}.tmp`;
+  await writeFile(temporary, JSON.stringify(data), "utf8");
+  await rename(temporary, target);
 }
 
 function safeBaseName(value: string) {

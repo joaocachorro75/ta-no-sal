@@ -57,6 +57,12 @@ Em **Storage**, adicione um volume e monte-o em `/data/uploads`. O EasyPanel ale
 
 Por fim, crie um domínio, configure a porta interna `3000` e faça o primeiro deploy. O EasyPanel oferece **Enable Auto Deploy** quando a origem é GitHub, para que novos pushes na branch configurada disparem a atualização da aplicação.[4]
 
+### Atualização automática gratuita de ondas e maré
+
+Após o primeiro deploy, configure uma chamada HTTP recorrente a cada **30 minutos** para `POST https://SEU_DOMINIO/api/scheduled/refresh-marine`. A rota é pública porque a informação exibida é pública; ela respeita o cache de dez minutos, portanto chamadas repetidas não provocam nova consulta à fonte antes desse intervalo. O endpoint retorna a hora da leitura, mantém a última resposta válida por até vinte e quatro horas se a fonte ficar indisponível e salva esse snapshot no volume do aplicativo para sobreviver a reinícios. O EasyPanel documenta tarefas recorrentes por cron e, para aplicações sem Dockerfile, também aponta a alternativa de um serviço externo de agendamento.[5]
+
+Depois da publicação, a ativação fica limitada a uma configuração única no painel de hospedagem: crie uma tarefa com frequência `*/30 * * * *` e requisição `POST` para a rota acima. A partir daí, o processo ocorre sozinho em segundo plano; o administrador não precisa abrir o aplicativo nem apertar qualquer botão.
+
 > Antes de ativar a vitrine para o público, entre em `/admin`, cadastre as categorias e crie os estabelecimentos. O primeiro login no EasyPanel usa `ADMIN_EMAIL` e `ADMIN_PASSWORD`; no ambiente gerenciado, a conta proprietária também mantém acesso administrativo via OAuth.
 
 O banco da primeira instalação começa **sem estabelecimentos fictícios**. Dessa forma, a vitrine pública só passa a exibir informações fornecidas e aprovadas pelos próprios parceiros locais.
@@ -71,3 +77,4 @@ O fluxo operacional é deliberadamente simples: alterações são revisadas loca
 [2]: https://easypanel.io/docs/builders "EasyPanel — Builders"
 [3]: https://easypanel.io/docs/services/app "EasyPanel — App Service: Storage"
 [4]: https://easypanel.io/docs/services/app "EasyPanel — App Service: GitHub e Auto Deploy"
+[5]: https://easypanel.io/docs/guides/cron-job "EasyPanel — Cron Jobs"

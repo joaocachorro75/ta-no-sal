@@ -9,6 +9,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { getUploadsDirectory } from "../appStorage";
+import { getBeachConditions } from "../beachConditions";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +39,14 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   app.use("/uploads", express.static(getUploadsDirectory(), { fallthrough: false, maxAge: "7d" }));
+  app.post("/api/scheduled/refresh-marine", async (req, res) => {
+    try {
+      const conditions = await getBeachConditions();
+      return res.json({ ok: true, lastFetchedAt: conditions.lastFetchedAt, source: conditions.source });
+    } catch (error) {
+      return res.status(502).json({ error: "marine-refresh-failed", message: error instanceof Error ? error.message : "Unknown error" });
+    }
+  });
   // tRPC API
   app.use(
     "/api/trpc",
