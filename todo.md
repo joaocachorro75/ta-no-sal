@@ -32,3 +32,4 @@
 - [x] Documentar a configuração no EasyPanel da chamada periódica ao endpoint de renovação marítima após o primeiro deploy.
 - [x] Adiar a configuração e comprovação do agendamento ativo no EasyPanel até a publicação final, conforme decisão do usuário.
 - [x] Preparar no código e documentar a chamada periódica de renovação marítima para ativação futura no EasyPanel.
+- [x] Padronizar o botão de contato como “Chamar no Zap” e manter “Como Chegar” para atendimento presencial.
