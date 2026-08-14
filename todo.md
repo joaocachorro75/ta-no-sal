@@ -33,3 +33,6 @@
 - [x] Adiar a configuração e comprovação do agendamento ativo no EasyPanel até a publicação final, conforme decisão do usuário.
 - [x] Preparar no código e documentar a chamada periódica de renovação marítima para ativação futura no EasyPanel.
 - [x] Padronizar o botão de contato como “Chamar no Zap” e manter “Como Chegar” para atendimento presencial.
+- [x] Mover o carrossel de Destaques para acima da busca na página inicial.
+- [x] Manter busca, filtros e catálogo completo abaixo dos Destaques.
+- [x] Validar a nova hierarquia em desktop e celular.
