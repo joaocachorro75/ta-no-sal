@@ -44,3 +44,6 @@
 - [x] Eliminar o espaço visual entre o hero e os Destaques.
 - [x] Posicionar o botão Usar minha localização abaixo das categorias.
 - [x] Validar a experiência nativa em celular e desktop.
+- [x] Exibir marca e convite “Instale o app do Sal” no topo da página inicial.
+- [x] Renomear “Destaques da praia” para “Destaques do Sal”.
+- [x] Atualizar a linguagem para atender bairros, moradores e visitantes durante todo o ano.
