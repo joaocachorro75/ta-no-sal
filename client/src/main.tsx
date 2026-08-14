@@ -43,6 +43,12 @@ const trpcClient = trpc.createClient({
       url: "/api/trpc",
       transformer: superjson,
       headers() {
+        try {
+          const localAdminToken = localStorage.getItem("to-no-sal-admin-token");
+          if (localAdminToken) return { Authorization: `Bearer tns-local.${localAdminToken}` };
+        } catch {
+          // localStorage unavailable
+        }
         // Preview auto-login fallback: when the browser blocks iframe cookies
         // (Safari ITP / private browsing / WebView), the runtime mirrors the
         // session into sessionStorage so we can forward it as a Bearer token.
