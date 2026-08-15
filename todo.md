@@ -135,3 +135,6 @@
 - [x] Capturar evidência visual do favicon e do botão de instalação usando o novo ícone personalizado.
 - [x] Exibir o ícone personalizado junto ao botão público de instalação do aplicativo.
 - [ ] Validar visualmente o prompt de instalação PWA ou o atalho instalado usando o ícone final da marca após a publicação.
+- [x] Criar Dockerfile de produção no diretório raiz para o build exigido pelo EasyPanel.
+- [x] Garantir que o Dockerfile instale dependências, compile frontend e servidor e inicie o artefato de produção.
+- [x] Validar localmente o comando de build que será executado na imagem do EasyPanel.
