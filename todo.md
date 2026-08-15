@@ -163,3 +163,6 @@
 - [x] Validar localmente marca, ícone e banner usando as URLs públicas de produção.
 - [x] Substituir referências remanescentes de logos e imagens demo por URLs públicas compatíveis com EasyPanel.
 - [x] Cobrir o fallback de uploads locais sem o proxy manus-storage no EasyPanel.
+- [x] Popular o banco vazio do EasyPanel com categorias, estabelecimentos e Destaque demonstrativos identificados.
+- [x] Garantir que o bootstrap demo não altere nem substitua dados reais existentes.
+- [x] Atualizar a documentação para explicar a remoção dos demos após os primeiros cadastros reais.

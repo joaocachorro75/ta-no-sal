@@ -76,9 +76,9 @@ O pagamento ocorre por **PIX com confirmação manual do administrador**. Depois
 
 Após o primeiro deploy, crie também uma tarefa diária que faça `POST https://SEU_DOMINIO/api/scheduled/suspend-expired-subscriptions`. Uma frequência adequada é `0 5 * * *`. A rota é idempotente: ela cria a cobrança de renovação quando faltam até cinco dias, mantém o local ativo até o vencimento e, apenas depois disso, marca a assinatura como atrasada e retira estabelecimentos não demonstrativos da vitrine até uma nova confirmação PIX.
 
-> Antes de ativar a vitrine para o público, entre em `/admin`, cadastre as categorias e crie os estabelecimentos. O primeiro login administrativo no EasyPanel usa `ADMIN_EMAIL` e `ADMIN_PASSWORD`; usuários e parceiros criam as próprias contas na tela `/entrar`.
+> O primeiro login administrativo no EasyPanel usa `ADMIN_EMAIL` e `ADMIN_PASSWORD`; usuários e parceiros criam as próprias contas na tela `/entrar`.
 
-O banco da primeira instalação começa **sem estabelecimentos fictícios**. Os estabelecimentos e imagens demonstrativos vistos no ambiente de desenvolvimento pertencem a outro banco e usam URLs de armazenamento gerenciado; eles não são copiados para o MySQL nem para o volume do EasyPanel. Depois da primeira publicação, entre em `/admin`, configure a chave PIX, crie as categorias e cadastre ou envie novamente as fotos dos estabelecimentos que devem aparecer na vitrine de produção.
+O primeiro deploy em um banco vazio cria automaticamente a **vitrine demonstrativa**: categorias, três estabelecimentos, imagens, logomarcas e um Destaque. Todos permanecem identificados visualmente como **“Estabelecimento demo”** e servem apenas para apresentar o funcionamento da plataforma. Quando os primeiros parceiros reais estiverem cadastrados, entre em `/admin` e exclua os demos. O bootstrap só é executado quando não há nenhum estabelecimento, portanto nunca altera ou substitui dados reais. Para publicar com o banco vazio de propósito, defina `SEED_DEMO_DIRECTORY=false` no EasyPanel.
 
 ### Checklist do primeiro deploy
 
@@ -87,9 +87,10 @@ O banco da primeira instalação começa **sem estabelecimentos fictícios**. Os
 | Banco | Criar o serviço MySQL e informar a URL interna em `DATABASE_URL`. |
 | Credenciais | Definir `JWT_SECRET`, `ADMIN_EMAIL` e `ADMIN_PASSWORD`. |
 | Arquivos | Criar um volume persistente montado em `/data/uploads` e definir `UPLOADS_DIR=/data/uploads`. |
-| Aplicação | Usar o builder **Dockerfile**, porta `3000` e deixar comandos personalizados vazios. |
-| Dados iniciais | O Dockerfile executa `pnpm db:migrate`; depois, cadastrar categorias, PIX e estabelecimentos pelo painel `/admin`. |
-| Imagens | Reenviar as fotos/logomarcas desejadas pelo painel administrativo; elas passarão a ser gravadas no volume. |
+| Aplicação | Usar o builder **Dockerfile**, com `PORT` e Target Port ambos em `80`, e deixar comandos personalizados vazios. |
+| Dados iniciais | O Dockerfile executa `pnpm db:migrate`; se o banco estiver vazio, a vitrine demo é criada automaticamente. |
+| Encerramento dos demos | Após os primeiros parceiros reais, excluir os itens identificados como demo pelo painel `/admin`. |
+| Imagens reais | Fotos e logomarcas enviadas pelo painel passam a ser gravadas no volume `/data/uploads`. |
 
 ## Fluxo de publicação
 

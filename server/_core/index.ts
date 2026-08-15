@@ -8,7 +8,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { getUploadsDirectory } from "../appStorage";
 import { getBeachConditions } from "../beachConditions";
-import { enforceExpiredSubscriptions } from "../db";
+import { bootstrapDemoDirectoryIfEmpty, enforceExpiredSubscriptions } from "../db";
 import { getRuntimePort } from "./runtimePort";
 
 async function startServer() {
@@ -48,6 +48,11 @@ async function startServer() {
     await setupVite(app, server);
   } else {
     serveStatic(app);
+  }
+
+  const demoBootstrap = await bootstrapDemoDirectoryIfEmpty();
+  if (demoBootstrap.seeded) {
+    console.log("[Demo] Initial showcase directory created for an empty database");
   }
 
   const port = getRuntimePort();

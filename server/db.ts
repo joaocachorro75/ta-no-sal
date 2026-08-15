@@ -747,3 +747,22 @@ export async function seedDemoDirectory() {
   }
   return { created: demos.length };
 }
+
+export function shouldBootstrapDemoDirectory(establishmentCount: number) {
+  return establishmentCount === 0;
+}
+
+export async function bootstrapDemoDirectoryIfEmpty() {
+  if (process.env.SEED_DEMO_DIRECTORY === "false") {
+    return { seeded: false, reason: "disabled" as const };
+  }
+
+  const db = await requireDb();
+  const existing = await db.select({ id: establishments.id }).from(establishments).limit(1);
+  if (!shouldBootstrapDemoDirectory(existing.length)) {
+    return { seeded: false, reason: "existing-establishments" as const };
+  }
+
+  await seedDemoDirectory();
+  return { seeded: true, reason: "empty-directory" as const };
+}
