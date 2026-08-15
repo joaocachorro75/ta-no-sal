@@ -6,19 +6,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   auth: { user: null as { role: "user" | "owner" | "admin" } | null, loading: false },
-  startLogin: vi.fn(),
   enroll: vi.fn(),
   navigate: vi.fn(),
 }));
 
 vi.mock("@/_core/hooks/useAuth", () => ({ useAuth: () => mocks.auth }));
-vi.mock("@/const", () => ({ startLogin: mocks.startLogin }));
 vi.mock("@/lib/trpc", () => ({ trpc: { owner: { enroll: { useMutation: () => ({ mutate: mocks.enroll, isPending: false }) } } } }));
 vi.mock("wouter", () => ({ Link: ({ children }: { children: React.ReactNode }) => children, useLocation: () => ["/cadastre-estabelecimento", mocks.navigate] }));
 
 import PartnerSignup, { partnerSignupPath } from "./PartnerSignup";
 
-afterEach(() => { cleanup(); mocks.startLogin.mockReset(); mocks.enroll.mockReset(); mocks.navigate.mockReset(); });
+afterEach(() => { cleanup(); mocks.enroll.mockReset(); mocks.navigate.mockReset(); });
 
 describe("entrada de cadastro de estabelecimento", () => {
   it("envia o visitante ao login preservando o retorno ao cadastro", async () => {
@@ -26,7 +24,7 @@ describe("entrada de cadastro de estabelecimento", () => {
     const user = userEvent.setup();
     render(<PartnerSignup />);
     await user.click(screen.getByRole("button", { name: "Criar conta ou entrar" }));
-    expect(mocks.startLogin).toHaveBeenCalledWith(partnerSignupPath);
+    expect(mocks.navigate).toHaveBeenCalledWith(`/entrar?retorno=${encodeURIComponent(partnerSignupPath)}`);
   });
 
   it("ativa o perfil de parceiro para um usuário autenticado antes do formulário", async () => {

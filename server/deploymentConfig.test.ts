@@ -16,8 +16,7 @@ describe("configuração de implantação", () => {
     expect(readme).toContain("DATABASE_URL");
     expect(readme).toContain("/data/uploads");
     expect(readme).toContain("Dockerfile");
-    expect(readme).toContain("OAUTH_SERVER_URL");
-    expect(readme).toContain("VITE_OAUTH_PORTAL_URL");
-    expect(readme).toContain("VITE_APP_ID");
+    expect(readme).toContain("login de usuários e parceiros é **local**");
+    expect(readme).toContain("JWT_SECRET");
   });
 });

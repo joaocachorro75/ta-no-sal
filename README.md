@@ -51,13 +51,10 @@ No campo **Environment**, cadastre as variáveis abaixo. Valores reais devem ser
 | `ADMIN_PASSWORD` | Senha forte usada para entrar em `/admin`. |
 | `UPLOADS_DIR` | Use `/data/uploads`. |
 | `PORT` | Use `3000`. |
-| `OAUTH_SERVER_URL` | Use `https://api.manus.im`. É obrigatório para concluir o login OAuth. |
-| `VITE_OAUTH_PORTAL_URL` | Use `https://manus.im`. É a página para onde o botão de entrar direciona o visitante. |
-| `VITE_APP_ID` | Use `aQYTuckTfwpmLXgjczdNeS`. Identificador público do aplicativo no fluxo OAuth. |
 
 > O valor de `DATABASE_URL` deve usar a conexão **interna** do serviço MySQL do EasyPanel, no formato `mysql://USUARIO:SENHA@HOST_INTERNO:3306/NOME_DO_BANCO`. Não use uma URL de banco do ambiente de desenvolvimento.
 
-> Depois de cadastrar as três variáveis OAuth e publicar, teste o login em uma janela anônima. O retorno autorizado deve apontar para `https://SEU_DOMINIO/api/oauth/callback`. Se o provedor OAuth recusar o domínio, envie a mensagem de erro: será necessário autorizar esse callback externo na configuração do aplicativo OAuth.
+> O login de usuários e parceiros é **local** ao Tô no Sal. Ele usa o MySQL e `JWT_SECRET` para proteger a sessão, sem depender de OAuth, de contas Manus ou de callbacks externos.
 
 Em **Storage**, adicione um volume e monte-o em `/data/uploads`. O EasyPanel alerta que o sistema de arquivos do contêiner pode ser perdido quando o serviço é recriado; por isso, o volume é necessário para preservar as fotos carregadas pelo painel.[3]
 
@@ -79,7 +76,7 @@ O pagamento ocorre por **PIX com confirmação manual do administrador**. Depois
 
 Após o primeiro deploy, crie também uma tarefa diária que faça `POST https://SEU_DOMINIO/api/scheduled/suspend-expired-subscriptions`. Uma frequência adequada é `0 5 * * *`. A rota é idempotente: ela cria a cobrança de renovação quando faltam até cinco dias, mantém o local ativo até o vencimento e, apenas depois disso, marca a assinatura como atrasada e retira estabelecimentos não demonstrativos da vitrine até uma nova confirmação PIX.
 
-> Antes de ativar a vitrine para o público, entre em `/admin`, cadastre as categorias e crie os estabelecimentos. O primeiro login no EasyPanel usa `ADMIN_EMAIL` e `ADMIN_PASSWORD`; no ambiente gerenciado, a conta proprietária também mantém acesso administrativo via OAuth.
+> Antes de ativar a vitrine para o público, entre em `/admin`, cadastre as categorias e crie os estabelecimentos. O primeiro login administrativo no EasyPanel usa `ADMIN_EMAIL` e `ADMIN_PASSWORD`; usuários e parceiros criam as próprias contas na tela `/entrar`.
 
 O banco da primeira instalação começa **sem estabelecimentos fictícios**. Os estabelecimentos e imagens demonstrativos vistos no ambiente de desenvolvimento pertencem a outro banco e usam URLs de armazenamento gerenciado; eles não são copiados para o MySQL nem para o volume do EasyPanel. Depois da primeira publicação, entre em `/admin`, configure a chave PIX, crie as categorias e cadastre ou envie novamente as fotos dos estabelecimentos que devem aparecer na vitrine de produção.
 

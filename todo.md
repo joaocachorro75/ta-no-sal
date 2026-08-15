@@ -143,4 +143,14 @@
 - [x] Configurar caminho persistente para uploads locais quando o armazenamento S3 não estiver disponível.
 - [x] Explicar como dados demonstrativos e imagens existentes se comportam no banco de produção.
 - [x] Documentar as variáveis OAuth necessárias para usuários e parceiros no EasyPanel.
-- [ ] Validar o redirecionamento de login e a URL pública autorizada no ambiente publicado.
+- [ ] Validar login e cadastro locais no domínio publicado do EasyPanel após a nova implantação.
+- [x] Adicionar credenciais locais seguras para contas de usuário e parceiro no MySQL.
+- [x] Criar cadastro, login, sessão e logout independentes do OAuth da Manus.
+- [x] Preservar permissões de usuário, parceiro e administrador com autenticação local.
+- [x] Criar telas públicas de entrar e criar conta para o Tô no Sal.
+- [x] Remover variáveis, redirecionamentos e documentação dependentes do OAuth da Manus.
+- [x] Cobrir credenciais, sessão e autorizações locais com testes automatizados.
+- [ ] Validar a autenticação local no navegador e no fluxo de produção independente de OAuth.
+- [x] Adicionar teste de integração para auth.register e auth.login, incluindo cookie de sessão e acesso autenticado.
+- [x] Cobrir autorização com sessão local para os papéis usuário, parceiro e administrador.
+- [ ] Publicar a versão independente no EasyPanel e validar cadastro, login e acesso aos painéis no domínio real.

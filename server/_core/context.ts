@@ -1,7 +1,10 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
+import { parse as parseCookieHeader } from "cookie";
 import { jwtVerify } from "jose";
+import { COOKIE_NAME } from "@shared/const";
 import type { User } from "../../drizzle/schema";
-import { sdk } from "./sdk";
+import * as db from "../db";
+import { verifyLocalSession } from "../localAuth";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
@@ -24,6 +27,7 @@ async function getLocalAdminUser(req: CreateExpressContextOptions["req"]): Promi
       openId: `local-admin:${payload.email}`,
       email: payload.email,
       name: typeof payload.name === "string" ? payload.name : "Administrador",
+      passwordHash: null,
       loginMethod: "local-admin",
       role: "admin",
       createdAt: now,
@@ -35,24 +39,15 @@ async function getLocalAdminUser(req: CreateExpressContextOptions["req"]): Promi
   }
 }
 
-export async function createContext(
-  opts: CreateExpressContextOptions
-): Promise<TrpcContext> {
-  let user: User | null = null;
+async function getLocalSessionUser(req: CreateExpressContextOptions["req"]): Promise<User | null> {
+  const token = parseCookieHeader(req.headers.cookie ?? "")[COOKIE_NAME];
+  if (!token) return null;
+  const session = await verifyLocalSession(token);
+  if (!session) return null;
+  return (await db.getUserById(session.userId)) ?? null;
+}
 
-  user = await getLocalAdminUser(opts.req);
-  if (!user) {
-    try {
-      user = await sdk.authenticateRequest(opts.req);
-    } catch (error) {
-      // Authentication is optional for public procedures.
-      user = null;
-    }
-  }
-
-  return {
-    req: opts.req,
-    res: opts.res,
-    user,
-  };
+export async function createContext(opts: CreateExpressContextOptions): Promise<TrpcContext> {
+  const user = (await getLocalAdminUser(opts.req)) ?? (await getLocalSessionUser(opts.req));
+  return { req: opts.req, res: opts.res, user };
 }

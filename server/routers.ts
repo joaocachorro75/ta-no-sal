@@ -11,6 +11,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, ownerProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { saveEstablishmentImage } from "./appStorage";
 import { getBeachConditions } from "./beachConditions";
+import { createLocalOpenId, createLocalSession, hashPassword, verifyPassword } from "./localAuth";
 
 const imageSchema = z.object({
   imageUrl: z.string().url(),
@@ -47,11 +48,40 @@ function localAdminSecret() {
   return new TextEncoder().encode(secret);
 }
 
+function publicUser(user: NonNullable<Parameters<typeof createLocalSession>[0]>) {
+  return { id: user.id, name: user.name, email: user.email, role: user.role };
+}
+
+async function setLocalSession(ctx: { req: any; res: any }, user: NonNullable<Parameters<typeof createLocalSession>[0]>) {
+  const token = await createLocalSession(user);
+  ctx.res.cookie(COOKIE_NAME, token, { ...getSessionCookieOptions(ctx.req), maxAge: 1000 * 60 * 60 * 24 * 30 });
+}
+
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(opts => opts.ctx.user ? publicUser(opts.ctx.user) : null),
+    register: publicProcedure
+      .input(z.object({ name: z.string().trim().min(2).max(120), email: z.string().trim().email().max(320), password: z.string().min(8).max(128) }))
+      .mutation(async ({ ctx, input }) => {
+        const email = input.email.toLowerCase();
+        if (await db.getUserByEmail(email)) throw new TRPCError({ code: "CONFLICT", message: "Já existe uma conta com este e-mail. Entre para continuar." });
+        const user = await db.createLocalUser({ openId: createLocalOpenId(), name: input.name, email, passwordHash: await hashPassword(input.password) });
+        await setLocalSession(ctx, user);
+        return { user: publicUser(user) };
+      }),
+    login: publicProcedure
+      .input(z.object({ email: z.string().trim().email().max(320), password: z.string().min(1).max(128) }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserByEmail(input.email);
+        if (!user?.passwordHash || !(await verifyPassword(input.password, user.passwordHash))) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "E-mail ou senha inválidos." });
+        }
+        await db.recordLocalSignIn(user.id);
+        await setLocalSession(ctx, user);
+        return { user: publicUser(user) };
+      }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -61,7 +91,7 @@ export const appRouter = router({
     }),
   }),
   adminAccess: router({
-    me: publicProcedure.query(({ ctx }) => ({ isAdmin: ctx.user?.role === "admin", user: ctx.user })),
+    me: publicProcedure.query(({ ctx }) => ({ isAdmin: ctx.user?.role === "admin", user: ctx.user ? publicUser(ctx.user) : null })),
     login: publicProcedure
       .input(z.object({ email: z.string().trim().email(), password: z.string().min(1).max(512) }))
       .mutation(async ({ input }) => {

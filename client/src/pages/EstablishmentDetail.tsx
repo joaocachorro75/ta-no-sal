@@ -4,7 +4,7 @@ import PublicBottomNav from "@/components/PublicBottomNav";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, ChevronLeft, ChevronRight, Heart, ImageOff, MapPin, Navigation, Phone, Share2 } from "lucide-react";
-import { startLogin } from "@/const";
+import { localLoginPath } from "@/lib/localAuth";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
 import { toast } from "sonner";
@@ -44,7 +44,7 @@ export default function EstablishmentDetail() {
   const next = () => setActiveImage(current => (current + 1) % gallery.length);
   const isFavorite = favoriteIds.includes(establishment.id);
   const toggleFavorite = () => {
-    if (!user) return startLogin();
+    if (!user) return window.location.assign(localLoginPath(`/estabelecimento/${slug}`));
     if (isFavorite) removeFavorite.mutate({ establishmentId: establishment.id }); else addFavorite.mutate({ establishmentId: establishment.id });
   };
 

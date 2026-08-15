@@ -12,12 +12,14 @@ import MapPage from "./pages/MapPage";
 import Account from "./pages/Account";
 import PartnerPortal from "./pages/PartnerPortal";
 import PartnerSignup from "./pages/PartnerSignup";
+import Login from "./pages/Login";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/entrar"} component={Login} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/conta"} component={Account} />
       <Route path={"/cadastre-estabelecimento"} component={PartnerSignup} />

@@ -19,7 +19,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { startLogin } from "@/const";
+import { localLoginPath } from "@/lib/localAuth";
 import { useIsMobile } from "@/hooks/useMobile";
 import { LayoutDashboard, LogOut, MapPinned, PanelLeft, Store, Tags, WalletCards } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -78,7 +78,7 @@ export default function DashboardLayout({
             </p>
           </div>
           <Button
-            onClick={() => startLogin()}
+            onClick={() => window.location.assign(localLoginPath("/admin"))}
             size="lg"
             className="w-full shadow-lg hover:shadow-xl transition-all"
           >
