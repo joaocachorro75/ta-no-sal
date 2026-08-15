@@ -110,8 +110,15 @@
 - [x] Adicionar teste de renderização do cartão de renovação mensal com valor, vencimento e botão de comprovante.
 - [x] Validar em teste a troca visual entre cobrança aguardando pagamento e comprovante em análise.
 - [x] Tornar latitude e longitude opcionais no cadastro do parceiro, preservando endereço e bairro.
-- [ ] Criar configuração administrativa para o limite diário de Destaques, iniciando entre 5 e 10 vagas.
+- [x] Criar configuração administrativa para o limite diário de Destaques, iniciando entre 5 e 10 vagas.
 - [x] Calcular disponibilidade diária de Destaques por período e impedir reservas além da capacidade.
-- [ ] Permitir que o dono escolha datas disponíveis para o Destaque e gere o PIX correspondente.
+- [x] Permitir que o dono escolha datas disponíveis para o Destaque e gere o PIX correspondente.
 - [x] Ativar o Destaque agendado automaticamente após confirmação do PIX, respeitando as vagas do período.
 - [x] Validar cadastro sem coordenadas, limite diário, bloqueio de excesso e confirmação do agendamento.
+- [x] Exibir no portal do parceiro a disponibilidade de Destaques por data ou período, com vagas reais e datas indisponíveis.
+- [x] Cobrir a exposição de disponibilidade e a seleção de datas com vaga antes da geração do PIX.
+- [x] Exibir no portal do parceiro um calendário ou lista de datas com estado explícito de disponível ou indisponível e vagas restantes por período.
+- [x] Adicionar teste de interface ou integração do PartnerPortal para renderização, bloqueio de data indisponível e geração do PIX a partir de data disponível.
+- [x] Adicionar teste integrado do PartnerPortal para calendário de disponibilidade, bloqueio de data ocupada e envio de requestHighlight com data livre.
+- [x] Renderizar o PartnerPortal com mocks de autenticação e tRPC para validar o calendário de disponibilidade.
+- [x] Cobrir o bloqueio da data indisponível e a chamada de requestHighlight com uma data disponível selecionada no formulário.

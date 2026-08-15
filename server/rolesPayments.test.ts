@@ -94,7 +94,13 @@ describe("perfis, favoritos e confirmação PIX", () => {
     expect(highlightRequest.status).toBe("em_analise");
     await adminCaller.admin.confirmPaymentRequest({ requestId: highlightRequest.id, adminNote: "Destaque confirmado." });
     expect((await adminCaller.admin.overview()).featuredSlots.some(slot => slot.establishmentId === establishmentId && slot.planId === highlightedPlan.id && slot.isActive)).toBe(true);
+    await adminCaller.admin.updatePaymentSettings({ dailyHighlightCapacity: 3 });
+    const availabilityWithVacancy = await ownerCaller.owner.highlightAvailability({ planId: highlightedPlan.id, startsAt: highlightStart, days: 1 });
+    expect(availabilityWithVacancy.days[0]?.isAvailable).toBe(true);
+    expect(availabilityWithVacancy.days[0]?.availableSlots).toBeGreaterThan(0);
     await adminCaller.admin.updatePaymentSettings({ dailyHighlightCapacity: 1 });
+    const exhaustedAvailability = await ownerCaller.owner.highlightAvailability({ planId: highlightedPlan.id, startsAt: highlightStart, days: 1 });
+    expect(exhaustedAvailability.days[0]).toMatchObject({ isAvailable: false, availableSlots: 0 });
     await expect(ownerCaller.owner.requestHighlight({ establishmentId, planId: highlightedPlan.id, startsAt: highlightStart, ownerNote: "Tentativa além da capacidade." })).rejects.toThrow("Não há mais vagas de Destaque disponíveis");
 
     await ownerCaller.account.addFavorite({ establishmentId });

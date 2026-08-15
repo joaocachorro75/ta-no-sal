@@ -280,28 +280,50 @@ export async function createOwnerPaymentRequest(input: { establishmentId: number
   await db.insert(paymentRequests).values({ ...input, requestedByUserId: ownerId, amountCents: plan.priceCents, status: "aguardando_pagamento" });
 }
 
-export async function createOwnerHighlightPaymentRequest(input: { establishmentId: number; planId: number; startsAt: Date; ownerNote?: string | null }, ownerId: number) {
-  if (!(await isOwnedByUser(input.establishmentId, ownerId))) throw new Error("Você não pode solicitar pagamento para este estabelecimento.");
+export async function getHighlightAvailability(input: { planId: number; startsAt?: Date; days?: number }) {
   const db = await requireDb();
+  const startsAt = new Date(input.startsAt ?? new Date());
+  startsAt.setHours(0, 0, 0, 0);
+  const rangeDays = Math.min(Math.max(input.days ?? 14, 1), 31);
   const [plan, settings] = await Promise.all([
     db.select().from(commercialPlans).where(and(eq(commercialPlans.id, input.planId), eq(commercialPlans.isActive, true))).limit(1),
     getPaymentSettings(),
-  ]).then(([plans, paymentSetting]) => [plans[0], paymentSetting] as const);
+  ]).then(([plans, paymentSettings]) => [plans[0], paymentSettings] as const);
   if (!plan || plan.code === "basico") throw new Error("Escolha um plano de Destaque disponível.");
+
+  const durationDays = plan.durationDays ?? 1;
+  const finalStart = new Date(startsAt.getTime() + (rangeDays - 1) * 24 * 60 * 60 * 1000);
+  const rangeEndsAt = new Date(finalStart.getTime() + (durationDays - 1) * 24 * 60 * 60 * 1000);
+  const [slots, pending] = await Promise.all([
+    db.select().from(featuredSlots).where(and(eq(featuredSlots.isActive, true), lte(featuredSlots.startsAt, rangeEndsAt), gte(featuredSlots.endsAt, startsAt))),
+    db.select().from(paymentRequests).where(and(eq(paymentRequests.purpose, "destaque"), inArray(paymentRequests.status, ["aguardando_pagamento", "em_analise"]), lte(paymentRequests.scheduledStartsAt, rangeEndsAt), gte(paymentRequests.scheduledEndsAt, startsAt))),
+  ]);
+  const dailyHighlightCapacity = settings.dailyHighlightCapacity;
+  const days = Array.from({ length: rangeDays }, (_, index) => {
+    const date = new Date(startsAt.getTime() + index * 24 * 60 * 60 * 1000);
+    const endsAt = new Date(date.getTime() + (durationDays - 1) * 24 * 60 * 60 * 1000);
+    let availableSlots = dailyHighlightCapacity;
+    for (let day = new Date(date); day <= endsAt; day = new Date(day.getTime() + 24 * 60 * 60 * 1000)) {
+      const dayEnd = new Date(day);
+      dayEnd.setHours(23, 59, 59, 999);
+      const booked = slots.filter(slot => slot.startsAt <= dayEnd && slot.endsAt >= day).length + pending.filter(request => request.scheduledStartsAt && request.scheduledEndsAt && request.scheduledStartsAt <= dayEnd && request.scheduledEndsAt >= day).length;
+      availableSlots = Math.min(availableSlots, Math.max(dailyHighlightCapacity - booked, 0));
+    }
+    return { date: date.toISOString().slice(0, 10), endsAt: endsAt.toISOString().slice(0, 10), availableSlots, isAvailable: availableSlots > 0 };
+  });
+  return { durationDays, priceCents: plan.priceCents, dailyHighlightCapacity, days };
+}
+
+export async function createOwnerHighlightPaymentRequest(input: { establishmentId: number; planId: number; startsAt: Date; ownerNote?: string | null }, ownerId: number) {
+  if (!(await isOwnedByUser(input.establishmentId, ownerId))) throw new Error("Você não pode solicitar pagamento para este estabelecimento.");
+  const db = await requireDb();
   const startsAt = new Date(input.startsAt);
   startsAt.setHours(0, 0, 0, 0);
   if (startsAt < new Date(new Date().setHours(0, 0, 0, 0))) throw new Error("Escolha uma data futura para o Destaque.");
-  const endsAt = new Date(startsAt.getTime() + ((plan.durationDays ?? 1) - 1) * 24 * 60 * 60 * 1000);
-  const [slots, pending] = await Promise.all([
-    db.select().from(featuredSlots).where(and(eq(featuredSlots.isActive, true), lte(featuredSlots.startsAt, endsAt), gte(featuredSlots.endsAt, startsAt))),
-    db.select().from(paymentRequests).where(and(eq(paymentRequests.purpose, "destaque"), inArray(paymentRequests.status, ["aguardando_pagamento", "em_analise"]), lte(paymentRequests.scheduledStartsAt, endsAt), gte(paymentRequests.scheduledEndsAt, startsAt))),
-  ]);
-  for (let day = new Date(startsAt); day <= endsAt; day = new Date(day.getTime() + 24 * 60 * 60 * 1000)) {
-    const dayStart = new Date(day); const dayEnd = new Date(day); dayEnd.setHours(23, 59, 59, 999);
-    const booked = slots.filter(slot => slot.startsAt <= dayEnd && slot.endsAt >= dayStart).length + pending.filter(request => request.scheduledStartsAt && request.scheduledEndsAt && request.scheduledStartsAt <= dayEnd && request.scheduledEndsAt >= dayStart).length;
-    if (booked >= settings.dailyHighlightCapacity) throw new Error("Não há mais vagas de Destaque disponíveis para todo esse período.");
-  }
-  await db.insert(paymentRequests).values({ establishmentId: input.establishmentId, planId: input.planId, purpose: "destaque", requestedByUserId: ownerId, amountCents: plan.priceCents, status: "aguardando_pagamento", ownerNote: input.ownerNote ?? null, scheduledStartsAt: startsAt, scheduledEndsAt: endsAt });
+  const availability = await getHighlightAvailability({ planId: input.planId, startsAt, days: 1 });
+  if (!availability.days[0]?.isAvailable) throw new Error("Não há mais vagas de Destaque disponíveis para todo esse período.");
+  const endsAt = new Date(startsAt.getTime() + (availability.durationDays - 1) * 24 * 60 * 60 * 1000);
+  await db.insert(paymentRequests).values({ establishmentId: input.establishmentId, planId: input.planId, purpose: "destaque", requestedByUserId: ownerId, amountCents: availability.priceCents, status: "aguardando_pagamento", ownerNote: input.ownerNote ?? null, scheduledStartsAt: startsAt, scheduledEndsAt: endsAt });
 }
 
 export async function submitPixProof(input: { requestId: number; pixProofUrl: string; ownerNote?: string | null }, ownerId: number) {

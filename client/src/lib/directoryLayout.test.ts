@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { DirectoryCard } from "@/components/DirectoryCard";
 import { HomeHero } from "@/components/HomeHero";
-import { MonthlyRenewalCard } from "@/pages/PartnerPortal";
+import { buildHighlightPixRequest, getHighlightStartAt, HighlightAvailabilityCalendar, MonthlyRenewalCard } from "@/pages/PartnerPortal";
 import { Router } from "wouter";
 import { directoryGridClass, directoryTitleClass, featuredSlideClass, partnerLogoClass, partnerLogoImageClass } from "./directoryLayout";
 import { heroImageClass, heroImageUrl, heroOverlayClass, heroSectionClass, heroTitleClass } from "./homePresentation";
@@ -96,5 +96,31 @@ describe("renovação mensal automática", () => {
     const markup = renderToStaticMarkup(createElement(MonthlyRenewalCard, { amountCents: 9900, dueAt: new Date("2026-09-10T12:00:00Z"), status: "em_analise", onProof: () => {} }));
     expect(markup).toContain("Comprovante em análise");
     expect(markup).not.toContain("Enviar comprovante");
+  });
+});
+
+describe("disponibilidade de Destaques", () => {
+  const highlightDays = [
+    { date: "2026-09-10", endsAt: "2026-09-16", availableSlots: 0, isAvailable: false },
+    { date: "2026-09-11", endsAt: "2026-09-17", availableSlots: 2, isAvailable: true },
+  ];
+
+  it("expõe datas disponíveis, indisponíveis e vagas restantes no portal do parceiro", () => {
+    const markup = renderToStaticMarkup(createElement(HighlightAvailabilityCalendar, { days: highlightDays, selectedDate: "2026-09-11", onSelect: () => {} }));
+    expect(markup).toContain("Indisponível");
+    expect(markup).toContain("2 vagas");
+    expect(markup).toContain("disabled");
+    expect(markup).toContain('aria-pressed="true"');
+  });
+
+  it("aceita somente uma data disponível para compor o início do PIX", () => {
+    expect(getHighlightStartAt(highlightDays, "2026-09-10")).toBeNull();
+    expect(getHighlightStartAt(highlightDays, "2026-09-11")?.toISOString()).toBe("2026-09-11T12:00:00.000Z");
+  });
+
+  it("integra a seleção do PartnerPortal ao pedido PIX somente quando a data possui vaga", () => {
+    expect(buildHighlightPixRequest({ establishmentId: "8", planId: "4", days: highlightDays, selectedDate: "2026-09-10", ownerNote: "Quero aparecer no fim de semana." })).toBeNull();
+    expect(buildHighlightPixRequest({ establishmentId: "8", planId: "4", days: highlightDays, selectedDate: "2026-09-11", ownerNote: "Quero aparecer no fim de semana." })).toMatchObject({ establishmentId: 8, planId: 4, ownerNote: "Quero aparecer no fim de semana." });
+    expect(buildHighlightPixRequest({ establishmentId: "8", planId: "4", days: highlightDays, selectedDate: "2026-09-11", ownerNote: "" })?.startsAt.toISOString()).toBe("2026-09-11T12:00:00.000Z");
   });
 });
