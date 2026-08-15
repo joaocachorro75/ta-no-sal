@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import MapPage from "./pages/MapPage";
 import Account from "./pages/Account";
 import PartnerPortal from "./pages/PartnerPortal";
+import PartnerSignup from "./pages/PartnerSignup";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -19,6 +20,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/conta"} component={Account} />
+      <Route path={"/cadastre-estabelecimento"} component={PartnerSignup} />
       <Route path={"/parceiro"} component={PartnerPortal} />
       <Route path={"/mapa"} component={MapPage} />
       <Route path={"/ondas-e-mare"} component={BeachPage} />

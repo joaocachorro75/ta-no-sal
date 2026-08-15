@@ -122,3 +122,7 @@
 - [x] Adicionar teste integrado do PartnerPortal para calendário de disponibilidade, bloqueio de data ocupada e envio de requestHighlight com data livre.
 - [x] Renderizar o PartnerPortal com mocks de autenticação e tRPC para validar o calendário de disponibilidade.
 - [x] Cobrir o bloqueio da data indisponível e a chamada de requestHighlight com uma data disponível selecionada no formulário.
+- [x] Criar um botão público “Cadastrar estabelecimento” como entrada principal para novos parceiros.
+- [x] Direcionar o visitante sem sessão ao login antes do cadastro e o parceiro autenticado ao seu painel.
+- [x] Exibir orientação clara para usuário autenticado que ainda não ativou o perfil de parceiro.
+- [x] Cobrir em testes os destinos da nova jornada de cadastro de estabelecimento.

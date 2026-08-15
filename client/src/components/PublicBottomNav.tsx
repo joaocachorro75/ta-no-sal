@@ -6,7 +6,7 @@ const navigation = [
   { href: "/", label: "Início", icon: House, matches: (path: string) => path === "/" || path.startsWith("/estabelecimento/") },
   { href: "/mapa", label: "Mapa", icon: Map, matches: (path: string) => path === "/mapa" },
   { href: "/ondas-e-mare", label: "Ondas", icon: Waves, matches: (path: string) => path === "/ondas-e-mare" },
-  { href: "/parceiro", label: "Parceiro", icon: Store, matches: (path: string) => path === "/parceiro" || path === "/admin" },
+  { href: "/cadastre-estabelecimento", label: "Cadastrar", icon: Store, matches: (path: string) => path === "/cadastre-estabelecimento" || path === "/parceiro" || path === "/admin" },
 ];
 
 export default function PublicBottomNav() {
