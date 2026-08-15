@@ -54,3 +54,14 @@
 - [x] Manter uma coluna em telas muito estreitas e duas colunas somente a partir de uma largura segura.
 - [x] Validar a grade e o espaço reservado às logomarcas em viewport de tablet.
 - [x] Adicionar uma verificação automatizada dos breakpoints da grade e da área de logomarca dos cartões.
+- [x] Corrigir a grade visual para manter dois estabelecimentos por linha no catálogo público.
+- [x] Garantir a exibição da logomarca cadastrada de cada parceiro nos respectivos cartões.
+- [x] Validar no navegador a versão que o usuário está visualizando antes de sincronizar a correção.
+- [x] Confirmar que as logomarcas demonstrativas foram finalizadas e aparecem sem estado de geração ou falha.
+- [x] Cobrir no teste público o retorno de logoUrl para parceiros que possuem logomarca cadastrada.
+- [x] Revalidar a home móvel após a disponibilidade final das logomarcas.
+- [x] Confirmar programaticamente que as URLs de logomarcas demonstrativas respondem como imagens finais.
+- [x] Cobrir a renderização de logoUrl no cartão público com um teste de componente.
+- [x] Revalidar a home móvel após as checagens programáticas das logomarcas.
+- [x] Inspecionar os arquivos finais das três logomarcas demonstrativas antes do checkpoint.
+- [x] Confirmar por teste que os parceiros demonstrativos mantêm logoUrl preenchida na origem de dados.

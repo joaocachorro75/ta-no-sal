@@ -62,6 +62,10 @@ describe("operações administrativas", () => {
     expect(overview.establishments.find(item => item.id === establishmentId)?.logoUrl).toBe("https://example.com/logo-atualizada.png");
     await caller.admin.updateEstablishment({ id: establishmentId, isActive: true });
 
+    const publicCaller = appRouter.createCaller({ ...createAdminContext(), user: null });
+    const publicDirectory = await publicCaller.directory.list();
+    expect(publicDirectory.find(item => item.id === establishmentId)?.logoUrl).toBe("https://example.com/logo-atualizada.png");
+
     const basicPlan = overview.plans.find(plan => plan.code === "basico")!;
     const highlightedPlan = overview.plans.find(plan => plan.code === "semana")!;
     await caller.admin.updatePlan({ id: basicPlan.id, priceCents: basicPlan.priceCents + 1, isActive: true });
@@ -80,6 +84,15 @@ describe("operações administrativas", () => {
     expect(featured).toBeDefined();
     featuredSlotId = featured!.id;
     await caller.admin.updateFeaturedSlotStatus({ id: featuredSlotId, isActive: false });
+  });
+
+  it("mantém logomarcas nos parceiros demonstrativos do catálogo público", async () => {
+    const publicCaller = appRouter.createCaller({ ...createAdminContext(), user: null });
+    const publicDirectory = await publicCaller.directory.list();
+    const demoPartners = publicDirectory.filter(item => item.isDemo);
+
+    expect(demoPartners).toHaveLength(3);
+    expect(demoPartners.every(item => item.logoUrl?.startsWith("/manus-storage/"))).toBe(true);
   });
 });
 

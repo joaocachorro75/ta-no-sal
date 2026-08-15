@@ -1,4 +1,4 @@
-export const directoryGridClass = "mt-5 grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:gap-4";
+export const directoryGridClass = "mt-5 grid grid-cols-2 gap-3 sm:gap-4";
 
 export const featuredSlideClass = "w-full shrink-0 snap-start";
 

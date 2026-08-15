@@ -2,6 +2,7 @@ import { BeachPlaceholder } from "@/components/Brand";
 import { partnerLogoClass, partnerLogoImageClass } from "@/lib/directoryLayout";
 import { cn } from "@/lib/utils";
 import { ChevronRight, MapPin, PackageCheck, Sparkles } from "lucide-react";
+import React from "react";
 import { Link } from "wouter";
 
 export type DirectoryCardItem = {
