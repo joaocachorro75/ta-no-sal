@@ -1,5 +1,5 @@
 import { BeachPlaceholder } from "@/components/Brand";
-import { partnerLogoClass, partnerLogoImageClass } from "@/lib/directoryLayout";
+import { directoryTitleClass, partnerLogoClass, partnerLogoImageClass } from "@/lib/directoryLayout";
 import { cn } from "@/lib/utils";
 import { ChevronRight, MapPin, PackageCheck, Sparkles } from "lucide-react";
 import React from "react";
@@ -61,15 +61,15 @@ export function DirectoryCard({ item, featured = false }: { item: DirectoryCardI
           </span>
         ) : null}
       </div>
-      <div className="p-3.5 sm:p-4">
+      <div className="p-3 sm:p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="truncate font-display text-[1.05rem] font-semibold tracking-[-0.025em] text-[#063b43] sm:text-xl">{item.name}</h3>
-            <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#527177] sm:text-sm">{item.description}</p>
+            <h3 className={directoryTitleClass}>{item.name}</h3>
+            <p className="mt-1 line-clamp-1 text-[0.7rem] leading-4 text-[#527177] sm:line-clamp-2 sm:text-sm sm:leading-5">{item.description}</p>
           </div>
-          <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-[#12909f] transition-transform group-hover:translate-x-0.5 sm:mt-1 sm:h-5 sm:w-5" />
+          <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#12909f] transition-transform group-hover:translate-x-0.5 sm:mt-1 sm:h-5 sm:w-5" />
         </div>
-        <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#e4efed] pt-2.5 text-[0.68rem] font-semibold text-[#467278] sm:mt-4 sm:pt-3 sm:text-xs">
+        <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-[#e4efed] pt-2 text-[0.61rem] font-semibold text-[#467278] sm:mt-4 sm:pt-3 sm:text-xs">
           <span className="flex min-w-0 items-center gap-1.5 truncate">
             {item.isDeliveryOnly ? <PackageCheck className="h-3.5 w-3.5 shrink-0 text-[#d99123]" /> : <MapPin className="h-3.5 w-3.5 shrink-0 text-[#d99123]" />}
             <span className="truncate">{item.isDeliveryOnly ? "Atendimento por entrega" : address || item.city || "Salinópolis"}</span>

@@ -1,21 +1,22 @@
 import { Brand } from "@/components/Brand";
 import { DirectoryCard, type DirectoryCardItem } from "@/components/DirectoryCard";
+import { HomeHero, type HeroSlide } from "@/components/HomeHero";
 import InstallAppButton from "@/components/InstallAppButton";
 import PublicBottomNav from "@/components/PublicBottomNav";
 import { Button } from "@/components/ui/button";
 import { directoryGridClass, featuredSlideClass } from "@/lib/directoryLayout";
 import { trpc } from "@/lib/trpc";
-import { ChevronLeft, ChevronRight, Compass, Crosshair, Loader2, MapPin, Sparkles, Store, Waves } from "lucide-react";
+import { Compass, Crosshair, Loader2, MapPin, Sparkles, Store } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 
 type Position = { latitude: number; longitude: number };
 
-const heroSlides = [
-  { eyebrow: "Salinópolis, Pará", title: "Ache o que resolve seu", accent: "dia em Salinas.", description: "Mercado, alimentação, depósito e muito mais em Salinópolis. Encontre o que precisa no seu bairro ou onde o dia pedir." },
-  { eyebrow: "Sua cidade, seu ritmo", title: "Do bairro ao litoral,", accent: "tudo por perto.", description: "Descubra parceiros locais para resolver a rotina, encontrar serviços e aproveitar Salinas sem perder tempo procurando." },
-  { eyebrow: "Guia local", title: "Salinas o ano inteiro,", accent: "do seu jeito.", description: "Use sua localização e deixe o Tô no Sal organizar o que está mais próximo de você." },
+const heroSlides: HeroSlide[] = [
+  { eyebrow: "Salinópolis, Pará", title: "O que você precisa,", accent: "mais perto.", description: "Comida, mercado, serviços e conveniência no seu bairro." },
+  { eyebrow: "Sua cidade, seu ritmo", title: "Descubra o melhor", accent: "do seu caminho.", description: "Parceiros locais para resolver a rotina sem perder tempo procurando." },
+  { eyebrow: "Guia local", title: "Salinas inteira", accent: "na sua mão.", description: "Use sua localização e encontre opções perto de você." },
 ];
 
 function distanceInKm(origin: Position, destination: { latitude: number; longitude: number }) {
@@ -65,17 +66,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#f7f3ea] pb-24 text-[#063b43] sm:pb-32">
-      <header className="absolute inset-x-0 top-0 z-20"><div className="container flex h-20 items-center justify-between"><Brand className="[&>div]:hidden sm:[&>div]:block" /><InstallAppButton /></div></header>
+      <header className="absolute inset-x-0 top-0 z-20"><div className="container flex h-20 items-center justify-between"><div className="rounded-full bg-white/90 px-3 py-2 shadow-lg shadow-[#063b43]/10 backdrop-blur"><Brand className="[&>div]:hidden sm:[&>div]:block" /></div><InstallAppButton /></div></header>
 
-      <section className="relative isolate min-h-[405px] overflow-hidden bg-[#dcefed] pb-0 pt-28 sm:min-h-[450px] sm:pt-32">
-        <div className="absolute inset-0 -z-10 [background:radial-gradient(circle_at_86%_18%,rgba(255,216,142,0.8),transparent_15%),radial-gradient(circle_at_75%_65%,rgba(43,155,165,0.26),transparent_30%),linear-gradient(120deg,#eff8f5_0%,#d7eeeb_45%,#96d0d3_100%)]" />
-        <div className="tide-lines absolute right-[4%] top-[7rem] -z-10 hidden h-36 w-[36rem] opacity-55 lg:block" aria-hidden="true" />
-        <div className="absolute -bottom-12 -left-[7%] -z-10 h-48 w-[115%] rotate-[-5deg] rounded-[50%] bg-[#f7f3ea]" />
-        <div className="container relative">
-          <div className="max-w-3xl pb-16 transition-opacity duration-500"><p className="inline-flex items-center gap-2 rounded-full border border-[#0b6976]/15 bg-white/70 px-3 py-1.5 text-xs font-extrabold uppercase tracking-[0.14em] text-[#0c7d88] backdrop-blur"><Waves className="h-3.5 w-3.5" /> {currentHero.eyebrow}</p><h1 className="mt-6 max-w-2xl font-display text-[clamp(2.8rem,7vw,6.1rem)] font-semibold leading-[0.88] tracking-[-0.065em] text-[#063b43]">{currentHero.title} <span className="text-[#0b8793]">{currentHero.accent}</span></h1><p className="mt-6 max-w-xl text-base leading-7 text-[#426c73] sm:text-lg">{currentHero.description}</p></div>
-          <div className="absolute bottom-7 left-4 flex items-center gap-2 sm:left-6"><button onClick={() => setHeroSlide(current => (current - 1 + heroSlides.length) % heroSlides.length)} aria-label="Banner anterior" className="grid h-8 w-8 place-items-center rounded-full border border-[#0b6976]/15 bg-white/70 text-[#0b7e8a] backdrop-blur transition hover:bg-white"><ChevronLeft className="h-4 w-4" /></button><div className="flex gap-1.5">{heroSlides.map((_, index) => <button key={index} onClick={() => setHeroSlide(index)} aria-label={`Ver banner ${index + 1}`} className={`h-2 rounded-full transition-all ${heroSlide === index ? "w-6 bg-[#0b7e8a]" : "w-2 bg-[#0b7e8a]/35"}`} />)}</div><button onClick={() => setHeroSlide(current => (current + 1) % heroSlides.length)} aria-label="Próximo banner" className="grid h-8 w-8 place-items-center rounded-full border border-[#0b6976]/15 bg-white/70 text-[#0b7e8a] backdrop-blur transition hover:bg-white"><ChevronRight className="h-4 w-4" /></button></div>
-        </div>
-      </section>
+      <HomeHero currentHero={currentHero} currentSlide={heroSlide} totalSlides={heroSlides.length} onPrevious={() => setHeroSlide(current => (current - 1 + heroSlides.length) % heroSlides.length)} onNext={() => setHeroSlide(current => (current + 1) % heroSlides.length)} onSelect={setHeroSlide} />
 
       <section className="container relative -mt-6 pb-16 sm:-mt-8 sm:pb-24" id="explorar">
         {nearbyFeatured.length > 0 && <div className="rounded-[1.8rem] bg-[#edf8f6] p-5 shadow-[0_18px_36px_rgba(6,59,67,0.08)] sm:p-7"><div className="mb-5 flex items-end justify-between gap-4"><div className="flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-full bg-[#ffe5aa] text-[#b47318]"><Sparkles className="h-4 w-4" /></span><div><p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#d68d20]">Em evidência</p><p className="font-display text-2xl font-semibold tracking-[-0.04em] text-[#063b43]">Destaques do Sal</p></div></div><span className="hidden text-xs font-bold text-[#5a7d82] sm:block">Deslize para descobrir</span></div><div className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:-mx-7 sm:px-7">{nearbyFeatured.map(item => <div key={`featured-${item.id}`} className={featuredSlideClass}><DirectoryCard item={item} featured /></div>)}</div></div>}

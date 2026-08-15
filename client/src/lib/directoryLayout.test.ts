@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { DirectoryCard } from "@/components/DirectoryCard";
+import { HomeHero } from "@/components/HomeHero";
 import { Router } from "wouter";
-import { directoryGridClass, featuredSlideClass, partnerLogoClass, partnerLogoImageClass } from "./directoryLayout";
+import { directoryGridClass, directoryTitleClass, featuredSlideClass, partnerLogoClass, partnerLogoImageClass } from "./directoryLayout";
+import { heroImageClass, heroImageUrl, heroOverlayClass, heroSectionClass, heroTitleClass } from "./homePresentation";
 
 describe("layout do catálogo", () => {
   it("mantém dois estabelecimentos por linha em toda a experiência móvel", () => {
@@ -17,6 +19,14 @@ describe("layout do catálogo", () => {
     expect(partnerLogoClass).toContain("bottom-3");
     expect(partnerLogoClass).toContain("right-3");
     expect(partnerLogoImageClass).toContain("object-contain");
+  });
+
+  it("prioriza a leitura integral do nome do parceiro nos cartões compactos", () => {
+    expect(directoryTitleClass).not.toContain("truncate");
+    expect(directoryTitleClass).toContain("break-words");
+    expect(directoryTitleClass).toContain("min-h");
+    expect(directoryTitleClass).toContain("sm:text-[1rem]");
+    expect(directoryTitleClass).toContain("lg:text-xl");
   });
 });
 
@@ -37,5 +47,38 @@ describe("logomarca do parceiro", () => {
 
     expect(markup).toContain("https://example.com/logo.png");
     expect(markup).toContain("Logomarca de Parceiro com logo");
+  });
+});
+
+describe("hero de descoberta", () => {
+  it("usa imagem fotográfica do acervo do projeto e conserva contraste sobre o conteúdo", () => {
+    expect(heroImageUrl).toMatch(/^\/manus-storage\/.+\.png$/);
+    expect(heroImageClass).toContain("object-cover");
+    expect(heroOverlayClass).toContain("linear-gradient");
+  });
+
+  it("mantém escala de hero adequada de celular a desktop", () => {
+    expect(heroSectionClass).toContain("min-h-[368px]");
+    expect(heroSectionClass).toContain("sm:min-h-[440px]");
+    expect(heroSectionClass).toContain("lg:min-h-[500px]");
+    expect(heroTitleClass).toContain("text-[2.45rem]");
+    expect(heroTitleClass).toContain("sm:text-[clamp(3rem,5vw,4.5rem)]");
+    expect(heroTitleClass).toContain("lg:text-[clamp(4rem,5.1vw,5.3rem)]");
+  });
+
+  it("renderiza a imagem, a sobreposição e a chamada de descoberta", () => {
+    const markup = renderToStaticMarkup(createElement(HomeHero, {
+      currentHero: { eyebrow: "Salinópolis, Pará", title: "O que você precisa,", accent: "mais perto.", description: "Parceiros locais." },
+      currentSlide: 0,
+      totalSlides: 3,
+      onPrevious: () => {},
+      onNext: () => {},
+      onSelect: () => {},
+    }));
+
+    expect(markup).toContain(heroImageUrl);
+    expect(markup).toContain("Produtos e conveniências locais em Salinópolis");
+    expect(markup).toContain("Explorar opções");
+    expect(markup).toContain("linear-gradient");
   });
 });

@@ -65,3 +65,13 @@
 - [x] Revalidar a home móvel após as checagens programáticas das logomarcas.
 - [x] Inspecionar os arquivos finais das três logomarcas demonstrativas antes do checkpoint.
 - [x] Confirmar por teste que os parceiros demonstrativos mantêm logoUrl preenchida na origem de dados.
+- [x] Garantir que o nome completo do estabelecimento seja legível nos cartões, sem truncamento.
+- [x] Avaliar referências de aplicativos locais de alto uso para a hierarquia do hero e dos cartões.
+- [x] Substituir ou reformular o hero textual por um banner fotográfico de descoberta, caso a avaliação justifique.
+- [x] Validar o refinamento visual em celular, tablet e desktop.
+- [x] Confirmar que o banner fotográfico final está disponível como imagem válida, sem estado de geração.
+- [x] Adicionar teste objetivo para a presença do hero fotográfico e seus elementos de descoberta.
+- [x] Cobrir as regras responsivas do hero e dos títulos de cartão para celular, tablet e desktop.
+- [x] Inspecionar o arquivo final do hero fotográfico para confirmar que não é placeholder ou falha.
+- [x] Cobrir a renderização do hero fotográfico, da sobreposição e da chamada de descoberta.
+- [x] Tornar explícitas as regras de mobile, tablet e desktop no hero e nos títulos dos cartões.
