@@ -147,11 +147,11 @@ function EstablishmentDialog({
     const payload = {
       categoryId: Number(form.categoryId), name: form.name, description: form.description, whatsapp: form.whatsapp,
       streetAddress: form.streetAddress || null, neighborhood: form.neighborhood || null, city: form.city || "Salinópolis",
-      latitude: Number(form.latitude), longitude: Number(form.longitude), isDeliveryOnly: form.isDeliveryOnly, isActive: form.isActive,
+      latitude: form.latitude.trim() ? Number(form.latitude) : null, longitude: form.longitude.trim() ? Number(form.longitude) : null, isDeliveryOnly: form.isDeliveryOnly, isActive: form.isActive,
       logoUrl: form.logoUrl || null,
       images: form.images.map(imageUrl => ({ imageUrl })),
     };
-    if (!Number.isFinite(payload.latitude) || !Number.isFinite(payload.longitude)) return toast.error("Informe latitude e longitude válidas.");
+    if ((payload.latitude !== null && !Number.isFinite(payload.latitude)) || (payload.longitude !== null && !Number.isFinite(payload.longitude))) return toast.error("Use números válidos caso queira informar as coordenadas.");
     if (form.id) updateEstablishment.mutate({ id: form.id, ...payload }); else createEstablishment.mutate(payload);
   };
 
@@ -173,8 +173,8 @@ function EstablishmentDialog({
             <Field label="Cidade"><Input value={form.city} onChange={event => update("city", event.target.value)} required /></Field>
             <Field label="Endereço"><Input value={form.streetAddress} onChange={event => update("streetAddress", event.target.value)} placeholder="Rua, número" /></Field>
             <Field label="Bairro"><Input value={form.neighborhood} onChange={event => update("neighborhood", event.target.value)} placeholder="Atalaia, Maçarico..." /></Field>
-            <Field label="Latitude"><Input type="number" step="any" value={form.latitude} onChange={event => update("latitude", event.target.value)} required placeholder="-0.61" /></Field>
-            <Field label="Longitude"><Input type="number" step="any" value={form.longitude} onChange={event => update("longitude", event.target.value)} required placeholder="-47.35" /></Field>
+            <Field label="Latitude (opcional)"><Input type="number" step="any" value={form.latitude} onChange={event => update("latitude", event.target.value)} placeholder="-0.61" /></Field>
+            <Field label="Longitude (opcional)"><Input type="number" step="any" value={form.longitude} onChange={event => update("longitude", event.target.value)} placeholder="-47.35" /></Field>
           </div>
           <div className="grid gap-3 rounded-2xl bg-[#edf7f5] p-4 sm:grid-cols-2">
             <label className="flex items-center gap-3 text-sm font-semibold text-[#285961]"><input checked={form.isDeliveryOnly} onChange={event => update("isDeliveryOnly", event.target.checked)} type="checkbox" className="h-4 w-4 accent-[#0a7c87]" />Atende somente por entrega</label>
@@ -209,7 +209,7 @@ function AdminContent() {
   const [editing, setEditing] = useState<EstablishmentForm>(emptyEstablishment);
   const [categoryName, setCategoryName] = useState("");
   const [featureForm, setFeatureForm] = useState({ establishmentId: "", planId: "", startsAt: toDateValue(new Date()), endsAt: "", displayOrder: "0" });
-  const [pixForm, setPixForm] = useState({ pixKey: "", recipientName: "", instructions: "" });
+  const [pixForm, setPixForm] = useState({ pixKey: "", recipientName: "", instructions: "", dailyHighlightCapacity: "5" });
   const utils = trpc.useUtils();
   const { data, isLoading, isError } = trpc.admin.overview.useQuery();
   const { data: paymentSettings } = trpc.admin.paymentSettings.useQuery();
@@ -228,7 +228,7 @@ function AdminContent() {
   const rejectPaymentRequest = trpc.admin.rejectPaymentRequest.useMutation({ onSuccess: () => { refreshPayments(); toast.success("Solicitação devolvida ao parceiro."); } });
 
   useEffect(() => {
-    if (paymentSettings) setPixForm({ pixKey: paymentSettings.pixKey ?? "", recipientName: paymentSettings.recipientName ?? "", instructions: paymentSettings.instructions ?? "" });
+    if (paymentSettings) setPixForm({ pixKey: paymentSettings.pixKey ?? "", recipientName: paymentSettings.recipientName ?? "", instructions: paymentSettings.instructions ?? "", dailyHighlightCapacity: String(paymentSettings.dailyHighlightCapacity ?? 5) });
   }, [paymentSettings]);
 
   const planById = useMemo(() => new Map(data?.plans.map(plan => [plan.id, plan]) ?? []), [data?.plans]);
@@ -242,7 +242,7 @@ function AdminContent() {
 
   const submitCategory = (event: FormEvent) => { event.preventDefault(); if (categoryName.trim()) createCategory.mutate({ name: categoryName }); };
   const submitFeatured = (event: FormEvent) => { event.preventDefault(); if (!featureForm.establishmentId || !featureForm.planId || !featureForm.startsAt || !featureForm.endsAt) return toast.error("Preencha todos os campos do destaque."); const plan = planById.get(Number(featureForm.planId)); if (!plan || plan.code === "basico") return toast.error("Escolha um plano de destaque: dia, semana ou mês."); createFeatured.mutate({ establishmentId: Number(featureForm.establishmentId), planId: Number(featureForm.planId), startsAt: new Date(`${featureForm.startsAt}T00:00:00`), endsAt: new Date(`${featureForm.endsAt}T23:59:59`), displayOrder: Number(featureForm.displayOrder || 0) }); };
-  const submitPixSettings = (event: FormEvent) => { event.preventDefault(); updatePaymentSettings.mutate({ pixKey: pixForm.pixKey || null, recipientName: pixForm.recipientName || null, instructions: pixForm.instructions || null }); };
+  const submitPixSettings = (event: FormEvent) => { event.preventDefault(); const dailyHighlightCapacity = Number(pixForm.dailyHighlightCapacity); if (!Number.isInteger(dailyHighlightCapacity) || dailyHighlightCapacity < 1 || dailyHighlightCapacity > 100) return toast.error("Informe entre 1 e 100 vagas diárias de Destaque."); updatePaymentSettings.mutate({ pixKey: pixForm.pixKey || null, recipientName: pixForm.recipientName || null, instructions: pixForm.instructions || null, dailyHighlightCapacity }); };
 
   return <div className="mx-auto max-w-7xl pb-12"><div className="mb-7 flex flex-col justify-between gap-5 lg:flex-row lg:items-end"><div><p className="text-xs font-extrabold uppercase tracking-[0.17em] text-[#d68d20]">Gestão de parceiros</p><h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.045em] text-[#063b43]">Painel do Tô no Sal</h1><p className="mt-2 text-sm text-[#5b7d82]">Organize a vitrine de Salinópolis em um só lugar.</p></div><Button onClick={openCreate} className="h-11 rounded-full bg-[#073c45] px-5 font-bold text-white hover:bg-[#0a5964]"><Plus className="h-4 w-4" /> Novo estabelecimento</Button></div><div className="mb-7 flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none]">{tabItems.map(item => { const Icon = item.icon; return <button key={item.id} onClick={() => setTab(item.id)} className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition ${tab === item.id ? "bg-[#073c45] text-white" : "bg-white text-[#4b7076] ring-1 ring-[#0b6976]/10 hover:bg-[#eaf5f3]"}`}><Icon className="h-4 w-4" />{item.label}</button>; })}</div>
     {tab === "inicio" && <div className="grid gap-5"><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric icon={Store} label="Estabelecimentos" value={String(data.establishments.length)} detail={`${data.establishments.filter(establishment => establishment.isActive).length} ativos`} /><Metric icon={Tags} label="Categorias" value={String(data.categories.length)} detail="Organize o catálogo" /><Metric icon={CheckCircle2} label="Pagamentos" value={String(paidCount)} detail="Registros pagos" /><Metric icon={Sparkles} label="Destaques" value={String(data.featuredSlots.filter(slot => slot.isActive).length)} detail="Campanhas ativas" /></div><div className="grid gap-5 lg:grid-cols-2"><section className="rounded-[1.5rem] bg-white p-6 shadow-sm ring-1 ring-[#0b6976]/8"><h2 className="font-display text-2xl text-[#063b43]">Próximos passos</h2><div className="mt-5 grid gap-3">{[{ label: "Crie as categorias", target: "categorias" as AdminTab, done: data.categories.length > 0 }, { label: "Cadastre os parceiros", target: "estabelecimentos" as AdminTab, done: data.establishments.length > 0 }, { label: "Defina seus planos", target: "planos" as AdminTab, done: data.plans.some(plan => plan.priceCents > 0) }].map(item => <button key={item.label} onClick={() => setTab(item.target)} className="flex items-center justify-between rounded-xl bg-[#f2f9f7] p-4 text-left transition hover:bg-[#e5f4f1]"><span className="flex items-center gap-3 font-semibold text-[#285961]">{item.done ? <CheckCircle2 className="h-5 w-5 text-[#1b9567]" /> : <span className="h-5 w-5 rounded-full border-2 border-[#83bbb8]" />}{item.label}</span><ChevronRight className="h-4 w-4 text-[#0b8793]" /></button>)}</div></section><section className="relative overflow-hidden rounded-[1.5rem] bg-[#073c45] p-6 text-white"><BeachPlaceholder className="absolute inset-0 opacity-30" /><div className="relative"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#f4cf7c]">Vitrine pública</p><h2 className="mt-2 max-w-sm font-display text-3xl leading-tight">Seu catálogo aparece para quem está em Salinópolis.</h2><Link href="/" className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-bold text-[#073c45]">Ver página pública <ChevronRight className="h-4 w-4" /></Link></div></section></div></div>}

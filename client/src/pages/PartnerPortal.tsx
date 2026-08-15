@@ -98,8 +98,6 @@ function PartnerContent() {
   };
   const selectHighlight = (establishmentId: number) => {
     setSelectedEstablishmentId(String(establishmentId));
-    const selectedDate = window.prompt("Data de início do Destaque (AAAA-MM-DD)", highlightStartAt);
-    if (selectedDate && /^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) setHighlightStartAt(selectedDate);
     document.getElementById("destaque-extra")?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
   const submitHighlight = (event: FormEvent) => {
