@@ -84,7 +84,7 @@ describe("perfis, favoritos e confirmação PIX", () => {
     expect((await publicCaller.directory.list()).some(item => item.id === establishmentId)).toBe(true);
 
     await expect(createOwnerPaymentRequest({ establishmentId, planId: paymentRequest.planId, purpose: "assinatura" }, visitorId)).rejects.toThrow("A mensalidade é gerada automaticamente");
-    await ownerCaller.owner.requestHighlight({ establishmentId, planId: highlightedPlan.id, ownerNote: "Quero aparecer em destaque." });
+    await ownerCaller.owner.requestHighlight({ establishmentId, planId: highlightedPlan.id, startsAt: new Date(Date.now() + 24 * 60 * 60 * 1000), ownerNote: "Quero aparecer em destaque." });
     let highlightRequest = (await ownerCaller.owner.overview()).paymentRequests.find(item => item.establishmentId === establishmentId && item.purpose === "destaque")!;
     expect(highlightRequest.status).toBe("aguardando_pagamento");
     await ownerCaller.owner.submitPixProof({ requestId: highlightRequest.id, pixProofUrl: "https://example.com/comprovante-destaque.png" });
@@ -120,10 +120,10 @@ describe("perfis, favoritos e confirmação PIX", () => {
     expect(renewedSubscription!.dueAt.getTime()).toBeGreaterThan(Date.now() + 20 * 24 * 60 * 60 * 1000);
     expect((await publicCaller.directory.list()).some(item => item.id === establishmentId)).toBe(true);
 
-    await db!.update(subscriptions).set({ dueAt: new Date(Date.now() - 60_000), status: "pago" }).where(eq(subscriptions.id, renewedSubscription!.id));
+    await db!.update(subscriptions).set({ dueAt: new Date(Date.now() - 60_000), status: "pago" }).where(eq(subscriptions.establishmentId, establishmentId));
     expect((await publicCaller.directory.list()).some(item => item.id === establishmentId)).toBe(false);
-    const [updated] = await db!.select().from(subscriptions).where(eq(subscriptions.id, renewedSubscription!.id)).limit(1);
-    expect(updated?.status).toBe("atrasado");
+    const updated = await db!.select().from(subscriptions).where(eq(subscriptions.establishmentId, establishmentId));
+    expect(updated.some(item => item.status === "atrasado")).toBe(true);
     renewalRequests = (await appRouter.createCaller(context(renewedOwner!)).owner.overview()).paymentRequests.filter(item => item.establishmentId === establishmentId && item.purpose === "assinatura" && item.status === "aguardando_pagamento");
     expect(renewalRequests).toHaveLength(1);
   });

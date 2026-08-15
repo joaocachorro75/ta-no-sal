@@ -169,10 +169,10 @@ export async function getFavoriteDirectory(userId: number) {
 export async function getPaymentSettings() {
   const db = await requireDb();
   const [settings] = await db.select().from(paymentSettings).where(eq(paymentSettings.id, 1)).limit(1);
-  return settings ?? { id: 1, pixKey: null, recipientName: null, instructions: null };
+  return settings ?? { id: 1, pixKey: null, recipientName: null, instructions: null, dailyHighlightCapacity: 5 };
 }
 
-export async function updatePaymentSettings(input: { pixKey?: string | null; recipientName?: string | null; instructions?: string | null; updatedByUserId: number }) {
+export async function updatePaymentSettings(input: { pixKey?: string | null; recipientName?: string | null; instructions?: string | null; dailyHighlightCapacity?: number; updatedByUserId: number }) {
   const db = await requireDb();
   await db.insert(paymentSettings).values({ id: 1, ...input }).onDuplicateKeyUpdate({ set: { ...input, updatedAt: new Date() } });
 }
@@ -280,8 +280,28 @@ export async function createOwnerPaymentRequest(input: { establishmentId: number
   await db.insert(paymentRequests).values({ ...input, requestedByUserId: ownerId, amountCents: plan.priceCents, status: "aguardando_pagamento" });
 }
 
-export async function createOwnerHighlightPaymentRequest(input: { establishmentId: number; planId: number; ownerNote?: string | null }, ownerId: number) {
-  return createOwnerPaymentRequest({ ...input, purpose: "destaque" }, ownerId);
+export async function createOwnerHighlightPaymentRequest(input: { establishmentId: number; planId: number; startsAt: Date; ownerNote?: string | null }, ownerId: number) {
+  if (!(await isOwnedByUser(input.establishmentId, ownerId))) throw new Error("Você não pode solicitar pagamento para este estabelecimento.");
+  const db = await requireDb();
+  const [plan, settings] = await Promise.all([
+    db.select().from(commercialPlans).where(and(eq(commercialPlans.id, input.planId), eq(commercialPlans.isActive, true))).limit(1),
+    getPaymentSettings(),
+  ]).then(([plans, paymentSetting]) => [plans[0], paymentSetting] as const);
+  if (!plan || plan.code === "basico") throw new Error("Escolha um plano de Destaque disponível.");
+  const startsAt = new Date(input.startsAt);
+  startsAt.setHours(0, 0, 0, 0);
+  if (startsAt < new Date(new Date().setHours(0, 0, 0, 0))) throw new Error("Escolha uma data futura para o Destaque.");
+  const endsAt = new Date(startsAt.getTime() + ((plan.durationDays ?? 1) - 1) * 24 * 60 * 60 * 1000);
+  const [slots, pending] = await Promise.all([
+    db.select().from(featuredSlots).where(and(eq(featuredSlots.isActive, true), lte(featuredSlots.startsAt, endsAt), gte(featuredSlots.endsAt, startsAt))),
+    db.select().from(paymentRequests).where(and(eq(paymentRequests.purpose, "destaque"), inArray(paymentRequests.status, ["aguardando_pagamento", "em_analise"]), lte(paymentRequests.scheduledStartsAt, endsAt), gte(paymentRequests.scheduledEndsAt, startsAt))),
+  ]);
+  for (let day = new Date(startsAt); day <= endsAt; day = new Date(day.getTime() + 24 * 60 * 60 * 1000)) {
+    const dayStart = new Date(day); const dayEnd = new Date(day); dayEnd.setHours(23, 59, 59, 999);
+    const booked = slots.filter(slot => slot.startsAt <= dayEnd && slot.endsAt >= dayStart).length + pending.filter(request => request.scheduledStartsAt && request.scheduledEndsAt && request.scheduledStartsAt <= dayEnd && request.scheduledEndsAt >= dayStart).length;
+    if (booked >= settings.dailyHighlightCapacity) throw new Error("Não há mais vagas de Destaque disponíveis para todo esse período.");
+  }
+  await db.insert(paymentRequests).values({ establishmentId: input.establishmentId, planId: input.planId, purpose: "destaque", requestedByUserId: ownerId, amountCents: plan.priceCents, status: "aguardando_pagamento", ownerNote: input.ownerNote ?? null, scheduledStartsAt: startsAt, scheduledEndsAt: endsAt });
 }
 
 export async function submitPixProof(input: { requestId: number; pixProofUrl: string; ownerNote?: string | null }, ownerId: number) {
@@ -325,8 +345,9 @@ export async function confirmPaymentRequest(input: { requestId: number; adminNot
     await db.insert(subscriptions).values({ establishmentId: request.establishmentId, planId: request.planId, status: "pago", amountCents: request.amountCents, dueAt, paidAt: now, confirmedByUserId: adminUserId, notes: input.adminNote ?? null });
     await db.update(establishments).set({ isActive: true }).where(eq(establishments.id, request.establishmentId));
   } else {
-    const endsAt = new Date(now.getTime() + (plan.durationDays ?? 1) * 24 * 60 * 60 * 1000);
-    await db.insert(featuredSlots).values({ establishmentId: request.establishmentId, planId: request.planId, startsAt: now, endsAt, displayOrder: input.displayOrder ?? 0, isActive: true });
+    const startsAt = request.scheduledStartsAt ?? now;
+    const endsAt = request.scheduledEndsAt ?? new Date(startsAt.getTime() + (plan.durationDays ?? 1) * 24 * 60 * 60 * 1000);
+    await db.insert(featuredSlots).values({ establishmentId: request.establishmentId, planId: request.planId, startsAt, endsAt, displayOrder: input.displayOrder ?? 0, isActive: true });
   }
 }
 
@@ -542,8 +563,8 @@ type EstablishmentInput = {
   streetAddress?: string | null;
   neighborhood?: string | null;
   city: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number | null;
+  longitude?: number | null;
   isDeliveryOnly: boolean;
   isActive: boolean;
   isDemo: boolean;

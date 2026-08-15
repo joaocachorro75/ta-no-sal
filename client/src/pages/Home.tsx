@@ -27,8 +27,8 @@ function distanceInKm(origin: Position, destination: { latitude: number; longitu
   return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function withDistance<T extends DirectoryCardItem & { latitude: number; longitude: number }>(items: T[], position: Position | null) {
-  return items.map(item => ({ ...item, distance: position ? distanceInKm(position, item) : null })).sort((first, second) => (first.distance ?? Number.POSITIVE_INFINITY) - (second.distance ?? Number.POSITIVE_INFINITY));
+function withDistance<T extends DirectoryCardItem & { latitude: number | null; longitude: number | null }>(items: T[], position: Position | null) {
+  return items.map(item => ({ ...item, distance: position && item.latitude !== null && item.longitude !== null ? distanceInKm(position, { latitude: item.latitude, longitude: item.longitude }) : null })).sort((first, second) => (first.distance ?? Number.POSITIVE_INFINITY) - (second.distance ?? Number.POSITIVE_INFINITY));
 }
 
 export default function Home() {

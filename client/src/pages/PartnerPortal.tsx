@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { BadgeCheck, Building2, Copy, ImagePlus, Loader2, Pencil, Plus, Sparkles, Store, Upload } from "lucide-react";
-import React, { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import React, { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const partnerNavigation: DashboardMenuItem[] = [{ icon: Building2, label: "Meu negócio", path: "/parceiro" }];
@@ -54,6 +54,7 @@ function PartnerContent() {
   const [editing, setEditing] = useState(false);
   const [selectedEstablishmentId, setSelectedEstablishmentId] = useState("");
   const [highlightPlanId, setHighlightPlanId] = useState("");
+  const [highlightStartAt, setHighlightStartAt] = useState(() => new Date().toISOString().slice(0, 10));
   const [note, setNote] = useState("");
   const [initialPayment, setInitialPayment] = useState<{ paymentRequestId: number | null; amountCents: number } | null>(null);
   const refresh = () => utils.owner.overview.invalidate();
@@ -85,8 +86,10 @@ function PartnerContent() {
   const submitEstablishment = (event: FormEvent) => {
     event.preventDefault();
     if (!form.categoryId) return toast.error("Selecione uma categoria.");
-    const payload = { categoryId: Number(form.categoryId), name: form.name, description: form.description, whatsapp: form.whatsapp, streetAddress: form.streetAddress || null, neighborhood: form.neighborhood || null, city: form.city || "Salinópolis", latitude: Number(form.latitude), longitude: Number(form.longitude), isDeliveryOnly: form.isDeliveryOnly, logoUrl: form.logoUrl || null, images: form.images.map(imageUrl => ({ imageUrl })) };
-    if (!Number.isFinite(payload.latitude) || !Number.isFinite(payload.longitude)) return toast.error("Informe latitude e longitude válidas.");
+    const latitude = form.latitude.trim() ? Number(form.latitude) : null;
+    const longitude = form.longitude.trim() ? Number(form.longitude) : null;
+    const payload = { categoryId: Number(form.categoryId), name: form.name, description: form.description, whatsapp: form.whatsapp, streetAddress: form.streetAddress || null, neighborhood: form.neighborhood || null, city: form.city || "Salinópolis", latitude, longitude, isDeliveryOnly: form.isDeliveryOnly, logoUrl: form.logoUrl || null, images: form.images.map(imageUrl => ({ imageUrl })) };
+    if ((latitude !== null && !Number.isFinite(latitude)) || (longitude !== null && !Number.isFinite(longitude))) return toast.error("Use números válidos caso queira informar as coordenadas.");
     if (form.id) update.mutate({ id: form.id, ...payload }); else completeRegistration.mutate(payload);
   };
   const openEdit = (item: NonNullable<typeof data>["establishments"][number]) => {
@@ -95,12 +98,14 @@ function PartnerContent() {
   };
   const selectHighlight = (establishmentId: number) => {
     setSelectedEstablishmentId(String(establishmentId));
+    const selectedDate = window.prompt("Data de início do Destaque (AAAA-MM-DD)", highlightStartAt);
+    if (selectedDate && /^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) setHighlightStartAt(selectedDate);
     document.getElementById("destaque-extra")?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
   const submitHighlight = (event: FormEvent) => {
     event.preventDefault();
     if (!selectedEstablishmentId || !highlightPlanId) return toast.error("Escolha o estabelecimento e o plano de Destaque.");
-    requestHighlight.mutate({ establishmentId: Number(selectedEstablishmentId), planId: Number(highlightPlanId), ownerNote: note || null });
+    requestHighlight.mutate({ establishmentId: Number(selectedEstablishmentId), planId: Number(highlightPlanId), startsAt: new Date(`${highlightStartAt}T12:00:00`), ownerNote: note || null });
   };
   const uploadProof = async (requestId: number, event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -111,6 +116,9 @@ function PartnerContent() {
   if (!isOwner) return <div className="mx-auto grid min-h-[70vh] max-w-xl place-items-center py-10 text-center"><section className="w-full rounded-[2rem] bg-white p-8 shadow-sm ring-1 ring-[#0b6976]/10"><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#edf7f5] text-[#0b7e8a]"><Store className="h-6 w-6" /></span><p className="mt-6 text-xs font-extrabold uppercase tracking-[0.16em] text-[#d68d20]">Área do parceiro</p><h1 className="mt-2 font-display text-3xl text-[#063b43]">Quer cadastrar seu estabelecimento?</h1><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#5b7d82]">Ative seu perfil de parceiro para cadastrar e administrar somente os seus locais, gerar o PIX mensal no cadastro e contratar Destaques extras.</p><Button onClick={() => enroll.mutate()} disabled={enroll.isPending} className="mt-6 rounded-full bg-[#073c45] px-5 text-white hover:bg-[#0a5964]">{enroll.isPending && <Loader2 className="h-4 w-4 animate-spin" />}Ativar perfil de parceiro</Button></section></div>;
   if (isLoading || !data) return <div className="grid min-h-[70vh] place-items-center"><Loader2 className="h-7 w-7 animate-spin text-[#0b8793]" /></div>;
   const pixReady = Boolean(data.paymentSettings.pixKey);
+  useEffect(() => {
+    document.querySelectorAll<HTMLInputElement>('input[type="number"][required]').forEach(input => input.removeAttribute("required"));
+  }, [editing]);
   const pendingMonthlyRenewal = data.paymentRequests.find(request => request.purpose === "assinatura" && ["aguardando_pagamento", "em_analise"].includes(request.status));
   const renewalSubscription = pendingMonthlyRenewal ? data.monthlySubscriptions.find(subscription => subscription.establishmentId === pendingMonthlyRenewal.establishmentId) : null;
 

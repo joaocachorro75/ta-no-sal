@@ -26,8 +26,8 @@ const establishmentSchema = z.object({
   streetAddress: z.string().trim().max(255).optional().nullable(),
   neighborhood: z.string().trim().max(120).optional().nullable(),
   city: z.string().trim().min(2).max(120).default("Salinópolis"),
-  latitude: z.number().min(-90).max(90),
-  longitude: z.number().min(-180).max(180),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
   isDeliveryOnly: z.boolean().default(false),
   isActive: z.boolean().default(true),
   isDemo: z.boolean().default(false),
@@ -131,13 +131,13 @@ export const appRouter = router({
       const { id, slug, name, ...rest } = input;
       return db.updateOwnedEstablishment({ id, ...rest, ...(slug ? { slug: createSlug(slug) } : name ? { slug: createSlug(name) } : {}) }, ctx.user.id);
     }),
-    requestHighlight: ownerProcedure.input(z.object({ establishmentId: z.number().int().positive(), planId: z.number().int().positive(), ownerNote: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => db.createOwnerHighlightPaymentRequest(input, ctx.user.id)),
+    requestHighlight: ownerProcedure.input(z.object({ establishmentId: z.number().int().positive(), planId: z.number().int().positive(), startsAt: z.coerce.date(), ownerNote: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => db.createOwnerHighlightPaymentRequest(input, ctx.user.id)),
     submitPixProof: ownerProcedure.input(z.object({ requestId: z.number().int().positive(), pixProofUrl: z.string().url().max(1024), ownerNote: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => db.submitPixProof(input, ctx.user.id)),
   }),
   admin: router({
     overview: adminProcedure.query(() => db.getAdminOverview()),
     paymentSettings: adminProcedure.query(() => db.getPaymentSettings()),
-    updatePaymentSettings: adminProcedure.input(z.object({ pixKey: z.string().trim().max(255).optional().nullable(), recipientName: z.string().trim().max(160).optional().nullable(), instructions: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => db.updatePaymentSettings({ ...input, updatedByUserId: ctx.user.id })),
+    updatePaymentSettings: adminProcedure.input(z.object({ pixKey: z.string().trim().max(255).optional().nullable(), recipientName: z.string().trim().max(160).optional().nullable(), instructions: z.string().max(4000).optional().nullable(), dailyHighlightCapacity: z.number().int().min(1).max(100).optional() })).mutation(({ ctx, input }) => db.updatePaymentSettings({ ...input, updatedByUserId: ctx.user.id })),
     paymentRequests: adminProcedure.query(() => db.getAdminPaymentRequests()),
     confirmPaymentRequest: adminProcedure.input(z.object({ requestId: z.number().int().positive(), adminNote: z.string().max(4000).optional().nullable(), displayOrder: z.number().int().min(0).optional() })).mutation(({ ctx, input }) => db.confirmPaymentRequest(input, ctx.user.id)),
     rejectPaymentRequest: adminProcedure.input(z.object({ requestId: z.number().int().positive(), adminNote: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => db.rejectPaymentRequest(input, ctx.user.id)),

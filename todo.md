@@ -109,3 +109,9 @@
 - [x] Cobrir a renderização do cartão de renovação mensal e sua chamada para comprovante.
 - [x] Adicionar teste de renderização do cartão de renovação mensal com valor, vencimento e botão de comprovante.
 - [x] Validar em teste a troca visual entre cobrança aguardando pagamento e comprovante em análise.
+- [x] Tornar latitude e longitude opcionais no cadastro do parceiro, preservando endereço e bairro.
+- [ ] Criar configuração administrativa para o limite diário de Destaques, iniciando entre 5 e 10 vagas.
+- [x] Calcular disponibilidade diária de Destaques por período e impedir reservas além da capacidade.
+- [ ] Permitir que o dono escolha datas disponíveis para o Destaque e gere o PIX correspondente.
+- [x] Ativar o Destaque agendado automaticamente após confirmação do PIX, respeitando as vagas do período.
+- [ ] Validar cadastro sem coordenadas, limite diário, bloqueio de excesso e confirmação do agendamento.
