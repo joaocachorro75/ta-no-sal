@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Download, Smartphone } from "lucide-react";
+import { Smartphone } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+const appIconUrl = "/manus-storage/to-no-sal-app-icon_e1569371.png";
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -33,5 +35,5 @@ export default function InstallAppButton() {
     if (choice.outcome === "accepted") setPromptEvent(null);
   };
 
-  return <Button onClick={install} variant="outline" size="sm" className="rounded-full border-[#0b6876]/15 bg-white/65 px-3 text-[0.65rem] font-bold text-[#0b6876] backdrop-blur-md hover:bg-white sm:px-3.5 sm:text-xs" aria-label="Instalar o aplicativo Tô no Sal"><Download className="h-3.5 w-3.5" /><span>{isInstalled ? "App instalado" : "Instalar app"}</span></Button>;
+  return <Button onClick={install} variant="outline" size="sm" className="rounded-full border-[#0b6876]/15 bg-white/65 px-3 text-[0.65rem] font-bold text-[#0b6876] backdrop-blur-md hover:bg-white sm:px-3.5 sm:text-xs" aria-label="Instalar o aplicativo Tô no Sal"><img src={appIconUrl} alt="" aria-hidden="true" className="h-4 w-4 rounded-[0.3rem]" /><span>{isInstalled ? "App instalado" : "Instalar app"}</span></Button>;
 }

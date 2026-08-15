@@ -127,3 +127,11 @@
 - [x] Exibir orientação clara para usuário autenticado que ainda não ativou o perfil de parceiro.
 - [x] Cobrir em testes os destinos da nova jornada de cadastro de estabelecimento.
 - [x] Simplificar o rótulo público de “Instale o app do Sal” para “Instalar app”.
+- [x] Criar ícone personalizado do Tô no Sal para favicon e instalação do aplicativo.
+- [x] Integrar os formatos de ícone necessários ao manifesto PWA e ao cabeçalho da página.
+- [x] Validar visualmente o novo ícone no botão de instalação, no favicon e no manifesto PWA ativo.
+- [ ] Confirmar o prompt nativo ou o atalho instalado em um navegador/dispositivo elegível após a publicação.
+- [x] Confirmar no navegador o favicon, o manifesto PWA e o ícone Apple referenciando o ativo final da marca.
+- [x] Capturar evidência visual do favicon e do botão de instalação usando o novo ícone personalizado.
+- [x] Exibir o ícone personalizado junto ao botão público de instalação do aplicativo.
+- [ ] Validar visualmente o prompt de instalação PWA ou o atalho instalado usando o ícone final da marca após a publicação.
