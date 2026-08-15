@@ -154,3 +154,6 @@
 - [x] Adicionar teste de integração para auth.register e auth.login, incluindo cookie de sessão e acesso autenticado.
 - [x] Cobrir autorização com sessão local para os papéis usuário, parceiro e administrador.
 - [ ] Publicar a versão independente no EasyPanel e validar cadastro, login e acesso aos painéis no domínio real.
+- [ ] Diagnosticar e corrigir a indisponibilidade pública do domínio do EasyPanel após o deploy independente.
+- [x] Fixar a escuta de produção na porta definida pelo EasyPanel, sem fallback para uma porta alternativa.
+- [x] Cobrir a seleção estrita da porta de execução com teste automatizado.
