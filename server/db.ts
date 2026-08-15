@@ -150,6 +150,7 @@ export async function getPublicDirectory(input: { search?: string; categorySlug?
         longitude: establishments.longitude,
         isDeliveryOnly: establishments.isDeliveryOnly,
         isDemo: establishments.isDemo,
+        logoUrl: establishments.logoUrl,
         categoryName: categories.name,
         categorySlug: categories.slug,
         categoryIcon: categories.icon,
@@ -178,6 +179,7 @@ export async function getPublicFeatured() {
         longitude: establishments.longitude,
         isDeliveryOnly: establishments.isDeliveryOnly,
         isDemo: establishments.isDemo,
+        logoUrl: establishments.logoUrl,
         categoryName: categories.name,
         categoryIcon: categories.icon,
         planLabel: commercialPlans.label,
@@ -218,6 +220,7 @@ export async function getPublicEstablishment(slug: string) {
       longitude: establishments.longitude,
       isDeliveryOnly: establishments.isDeliveryOnly,
       isDemo: establishments.isDemo,
+      logoUrl: establishments.logoUrl,
       categoryName: categories.name,
       categoryIcon: categories.icon,
     })
@@ -256,6 +259,7 @@ export async function getAdminOverview() {
         isDeliveryOnly: establishments.isDeliveryOnly,
         isActive: establishments.isActive,
         isDemo: establishments.isDemo,
+        logoUrl: establishments.logoUrl,
       })
       .from(establishments)
       .innerJoin(categories, eq(establishments.categoryId, categories.id))
@@ -305,6 +309,7 @@ type EstablishmentInput = {
   isDeliveryOnly: boolean;
   isActive: boolean;
   isDemo: boolean;
+  logoUrl?: string | null;
   images: { imageUrl: string; altText?: string | null }[];
 };
 

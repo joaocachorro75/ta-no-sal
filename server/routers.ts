@@ -31,6 +31,7 @@ const establishmentSchema = z.object({
   isDeliveryOnly: z.boolean().default(false),
   isActive: z.boolean().default(true),
   isDemo: z.boolean().default(false),
+  logoUrl: z.string().url().max(1024).optional().nullable(),
   images: z.array(imageSchema).max(6).default([]),
 });
 

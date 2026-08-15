@@ -71,6 +71,7 @@ export const establishments = mysqlTable(
     isDeliveryOnly: boolean("isDeliveryOnly").default(false).notNull(),
     isActive: boolean("isActive").default(true).notNull(),
     isDemo: boolean("isDemo").default(false).notNull(),
+    logoUrl: varchar("logoUrl", { length: 1024 }),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },

@@ -26,6 +26,7 @@ type EstablishmentForm = {
   longitude: string;
   isDeliveryOnly: boolean;
   isActive: boolean;
+  logoUrl: string;
   images: string[];
 };
 
@@ -41,6 +42,7 @@ const emptyEstablishment: EstablishmentForm = {
   longitude: "",
   isDeliveryOnly: false,
   isActive: true,
+  logoUrl: "",
   images: [],
 };
 
@@ -118,6 +120,26 @@ function EstablishmentDialog({
     }
   };
 
+  const uploadLogo = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      toast.error("Use JPEG, PNG ou WebP de até 5 MB para a logomarca.");
+      event.target.value = "";
+      return;
+    }
+    try {
+      const base64 = await readFileAsBase64(file);
+      const uploaded = await uploadImage.mutateAsync({ fileName: file.name, mimeType: file.type as "image/jpeg" | "image/png" | "image/webp", base64 });
+      update("logoUrl", uploaded.url);
+      toast.success("Logomarca enviada.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Falha ao enviar a logomarca.");
+    } finally {
+      event.target.value = "";
+    }
+  };
+
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!form.categoryId) return toast.error("Selecione uma categoria.");
@@ -125,13 +147,57 @@ function EstablishmentDialog({
       categoryId: Number(form.categoryId), name: form.name, description: form.description, whatsapp: form.whatsapp,
       streetAddress: form.streetAddress || null, neighborhood: form.neighborhood || null, city: form.city || "Salinópolis",
       latitude: Number(form.latitude), longitude: Number(form.longitude), isDeliveryOnly: form.isDeliveryOnly, isActive: form.isActive,
+      logoUrl: form.logoUrl || null,
       images: form.images.map(imageUrl => ({ imageUrl })),
     };
     if (!Number.isFinite(payload.latitude) || !Number.isFinite(payload.longitude)) return toast.error("Informe latitude e longitude válidas.");
     if (form.id) updateEstablishment.mutate({ id: form.id, ...payload }); else createEstablishment.mutate(payload);
   };
 
-  return <Dialog open={open} onOpenChange={value => { onOpenChange(value); if (!value) setForm(initial); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle className="font-display text-3xl text-[#063b43]">{form.id ? "Editar estabelecimento" : "Novo estabelecimento"}</DialogTitle><DialogDescription>Cadastre as informações que serão exibidas para visitantes do Tô no Sal.</DialogDescription></DialogHeader><form onSubmit={submit} className="mt-3 grid gap-5"><div className="grid gap-4 sm:grid-cols-2"><Field label="Nome"><Input value={form.name} onChange={event => update("name", event.target.value)} required placeholder="Ex.: Casa do Açaí" /></Field><Field label="Categoria"><select value={form.categoryId} onChange={event => update("categoryId", event.target.value)} required className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"><option value="">Selecione</option>{categories.filter(category => category.isActive || String(category.id) === form.categoryId).map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></Field></div><Field label="Descrição"><Textarea value={form.description} onChange={event => update("description", event.target.value)} required minLength={12} placeholder="Conte o que o visitante encontra neste local." /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="WhatsApp"><Input value={form.whatsapp} onChange={event => update("whatsapp", event.target.value)} required placeholder="5591..." /></Field><Field label="Cidade"><Input value={form.city} onChange={event => update("city", event.target.value)} required /></Field><Field label="Endereço"><Input value={form.streetAddress} onChange={event => update("streetAddress", event.target.value)} placeholder="Rua, número" /></Field><Field label="Bairro"><Input value={form.neighborhood} onChange={event => update("neighborhood", event.target.value)} placeholder="Atalaia, Maçarico..." /></Field><Field label="Latitude"><Input type="number" step="any" value={form.latitude} onChange={event => update("latitude", event.target.value)} required placeholder="-0.61" /></Field><Field label="Longitude"><Input type="number" step="any" value={form.longitude} onChange={event => update("longitude", event.target.value)} required placeholder="-47.35" /></Field></div><div className="grid gap-3 rounded-2xl bg-[#edf7f5] p-4 sm:grid-cols-2"><label className="flex items-center gap-3 text-sm font-semibold text-[#285961]"><input checked={form.isDeliveryOnly} onChange={event => update("isDeliveryOnly", event.target.checked)} type="checkbox" className="h-4 w-4 accent-[#0a7c87]" />Atende somente por entrega</label><label className="flex items-center gap-3 text-sm font-semibold text-[#285961]"><input checked={form.isActive} onChange={event => update("isActive", event.target.checked)} type="checkbox" className="h-4 w-4 accent-[#0a7c87]" />Estabelecimento ativo</label></div><div><div className="flex items-center justify-between"><Label>Galeria de fotos <span className="font-normal text-muted-foreground">({form.images.length}/6)</span></Label><label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#073c45] px-3 py-2 text-xs font-bold text-white"><ImagePlus className="h-3.5 w-3.5" />{uploadImage.isPending ? "Enviando..." : "Adicionar fotos"}<input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={uploadFiles} className="hidden" disabled={uploadImage.isPending || form.images.length >= 6} /></label></div>{form.images.length ? <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-6">{form.images.map((url, index) => <div key={url} className="group relative aspect-square overflow-hidden rounded-xl bg-[#dcefed]"><img src={url} alt={`Foto ${index + 1}`} className="h-full w-full object-cover" /><button type="button" aria-label="Remover foto" onClick={() => update("images", form.images.filter(image => image !== url))} className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-[#073c45]/85 text-white opacity-0 transition group-hover:opacity-100"><X className="h-3.5 w-3.5" /></button></div>)}</div> : <p className="mt-2 text-sm text-[#638187]">Envie até seis imagens que mostrem o local, cardápio ou produtos.</p>}</div><div className="flex justify-end gap-3 border-t pt-5"><Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-full">Cancelar</Button><Button type="submit" disabled={createEstablishment.isPending || updateEstablishment.isPending} className="rounded-full bg-[#073c45] text-white hover:bg-[#0a5964]">{(createEstablishment.isPending || updateEstablishment.isPending) && <Loader2 className="h-4 w-4 animate-spin" />}{form.id ? "Salvar alterações" : "Criar estabelecimento"}</Button></div></form></DialogContent></Dialog>;
+  return (
+    <Dialog open={open} onOpenChange={value => { onOpenChange(value); if (!value) setForm(initial); }}>
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="font-display text-3xl text-[#063b43]">{form.id ? "Editar estabelecimento" : "Novo estabelecimento"}</DialogTitle>
+          <DialogDescription>Cadastre as informações que serão exibidas para visitantes do Tô no Sal.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="mt-3 grid gap-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Nome"><Input value={form.name} onChange={event => update("name", event.target.value)} required placeholder="Ex.: Casa do Açaí" /></Field>
+            <Field label="Categoria"><select value={form.categoryId} onChange={event => update("categoryId", event.target.value)} required className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"><option value="">Selecione</option>{categories.filter(category => category.isActive || String(category.id) === form.categoryId).map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></Field>
+          </div>
+          <Field label="Descrição"><Textarea value={form.description} onChange={event => update("description", event.target.value)} required minLength={12} placeholder="Conte o que o visitante encontra neste local." /></Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="WhatsApp"><Input value={form.whatsapp} onChange={event => update("whatsapp", event.target.value)} required placeholder="5591..." /></Field>
+            <Field label="Cidade"><Input value={form.city} onChange={event => update("city", event.target.value)} required /></Field>
+            <Field label="Endereço"><Input value={form.streetAddress} onChange={event => update("streetAddress", event.target.value)} placeholder="Rua, número" /></Field>
+            <Field label="Bairro"><Input value={form.neighborhood} onChange={event => update("neighborhood", event.target.value)} placeholder="Atalaia, Maçarico..." /></Field>
+            <Field label="Latitude"><Input type="number" step="any" value={form.latitude} onChange={event => update("latitude", event.target.value)} required placeholder="-0.61" /></Field>
+            <Field label="Longitude"><Input type="number" step="any" value={form.longitude} onChange={event => update("longitude", event.target.value)} required placeholder="-47.35" /></Field>
+          </div>
+          <div className="grid gap-3 rounded-2xl bg-[#edf7f5] p-4 sm:grid-cols-2">
+            <label className="flex items-center gap-3 text-sm font-semibold text-[#285961]"><input checked={form.isDeliveryOnly} onChange={event => update("isDeliveryOnly", event.target.checked)} type="checkbox" className="h-4 w-4 accent-[#0a7c87]" />Atende somente por entrega</label>
+            <label className="flex items-center gap-3 text-sm font-semibold text-[#285961]"><input checked={form.isActive} onChange={event => update("isActive", event.target.checked)} type="checkbox" className="h-4 w-4 accent-[#0a7c87]" />Estabelecimento ativo</label>
+          </div>
+          <div className="rounded-2xl bg-[#f7f3ea] p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <Label>Logomarca do estabelecimento</Label>
+                <p className="mt-1 text-xs leading-5 text-[#638187]">A logo aparece sobre a foto principal do cartão. Este campo é opcional.</p>
+              </div>
+              <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-[#0b7e8a] px-3 py-2 text-xs font-bold text-white"><ImagePlus className="h-3.5 w-3.5" />{uploadImage.isPending ? "Enviando..." : form.logoUrl ? "Trocar logo" : "Enviar logo"}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadLogo} className="hidden" disabled={uploadImage.isPending} /></label>
+            </div>
+            {form.logoUrl ? <div className="mt-3 flex items-center gap-3"><div className="grid h-14 w-14 place-items-center overflow-hidden rounded-xl bg-white p-2 shadow-sm ring-1 ring-[#0b6976]/10"><img src={form.logoUrl} alt="Prévia da logomarca" className="h-full w-full object-contain" /></div><Button type="button" variant="ghost" onClick={() => update("logoUrl", "")} className="h-8 rounded-full px-3 text-xs text-destructive">Remover logo</Button></div> : <p className="mt-3 text-xs text-[#638187]">Envie uma versão quadrada ou horizontal em PNG, JPEG ou WebP.</p>}
+          </div>
+          <div>
+            <div className="flex items-center justify-between"><Label>Galeria de fotos <span className="font-normal text-muted-foreground">({form.images.length}/6)</span></Label><label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#073c45] px-3 py-2 text-xs font-bold text-white"><ImagePlus className="h-3.5 w-3.5" />{uploadImage.isPending ? "Enviando..." : "Adicionar fotos"}<input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={uploadFiles} className="hidden" disabled={uploadImage.isPending || form.images.length >= 6} /></label></div>
+            {form.images.length ? <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-6">{form.images.map((url, index) => <div key={url} className="group relative aspect-square overflow-hidden rounded-xl bg-[#dcefed]"><img src={url} alt={`Foto ${index + 1}`} className="h-full w-full object-cover" /><button type="button" aria-label="Remover foto" onClick={() => update("images", form.images.filter(image => image !== url))} className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-[#073c45]/85 text-white opacity-0 transition group-hover:opacity-100"><X className="h-3.5 w-3.5" /></button></div>)}</div> : <p className="mt-2 text-sm text-[#638187]">Envie até seis imagens que mostrem o local, cardápio ou produtos.</p>}
+          </div>
+          <div className="flex justify-end gap-3 border-t pt-5"><Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-full">Cancelar</Button><Button type="submit" disabled={createEstablishment.isPending || updateEstablishment.isPending} className="rounded-full bg-[#073c45] text-white hover:bg-[#0a5964]">{(createEstablishment.isPending || updateEstablishment.isPending) && <Loader2 className="h-4 w-4 animate-spin" />}{form.id ? "Salvar alterações" : "Criar estabelecimento"}</Button></div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return <div className="grid gap-2"><Label>{label}</Label>{children}</div>; }
@@ -160,7 +226,7 @@ function AdminContent() {
   const establishmentById = useMemo(() => new Map(data?.establishments.map(establishment => [establishment.id, establishment]) ?? []), [data?.establishments]);
   const paidCount = data?.subscriptions.filter(subscription => subscription.status === "pago").length ?? 0;
   const openCreate = () => { setEditing(emptyEstablishment); setEstablishmentDialog(true); };
-  const openEdit = (establishment: NonNullable<typeof data>["establishments"][number]) => { setEditing({ id: establishment.id, categoryId: String(establishment.categoryId), name: establishment.name, description: establishment.description, whatsapp: establishment.whatsapp, streetAddress: establishment.streetAddress ?? "", neighborhood: establishment.neighborhood ?? "", city: establishment.city, latitude: String(establishment.latitude), longitude: String(establishment.longitude), isDeliveryOnly: establishment.isDeliveryOnly, isActive: establishment.isActive, images: establishment.images }); setEstablishmentDialog(true); };
+  const openEdit = (establishment: NonNullable<typeof data>["establishments"][number]) => { setEditing({ id: establishment.id, categoryId: String(establishment.categoryId), name: establishment.name, description: establishment.description, whatsapp: establishment.whatsapp, streetAddress: establishment.streetAddress ?? "", neighborhood: establishment.neighborhood ?? "", city: establishment.city, latitude: String(establishment.latitude), longitude: String(establishment.longitude), isDeliveryOnly: establishment.isDeliveryOnly, isActive: establishment.isActive, logoUrl: establishment.logoUrl ?? "", images: establishment.images }); setEstablishmentDialog(true); };
 
   if (isLoading) return <div className="grid min-h-[70vh] place-items-center"><Loader2 className="h-7 w-7 animate-spin text-[#0b8793]" /></div>;
   if (isError || !data) return <AdminLogin />;

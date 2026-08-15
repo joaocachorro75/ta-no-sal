@@ -47,16 +47,19 @@ describe("operações administrativas", () => {
       isDeliveryOnly: false,
       isActive: true,
       isDemo: true,
+      logoUrl: "https://example.com/logo-teste.png",
       images: [],
     });
     overview = await caller.admin.overview();
     const establishment = overview.establishments.find(item => item.name === establishmentName);
     expect(establishment).toBeDefined();
+    expect(establishment?.logoUrl).toBe("https://example.com/logo-teste.png");
     establishmentId = establishment!.id;
 
-    await caller.admin.updateEstablishment({ id: establishmentId, isActive: false });
+    await caller.admin.updateEstablishment({ id: establishmentId, isActive: false, logoUrl: "https://example.com/logo-atualizada.png" });
     overview = await caller.admin.overview();
     expect(overview.establishments.find(item => item.id === establishmentId)?.isActive).toBe(false);
+    expect(overview.establishments.find(item => item.id === establishmentId)?.logoUrl).toBe("https://example.com/logo-atualizada.png");
     await caller.admin.updateEstablishment({ id: establishmentId, isActive: true });
 
     const basicPlan = overview.plans.find(plan => plan.code === "basico")!;

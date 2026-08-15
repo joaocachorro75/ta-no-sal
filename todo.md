@@ -47,3 +47,10 @@
 - [x] Exibir marca e convite “Instale o app do Sal” no topo da página inicial.
 - [x] Renomear “Destaques da praia” para “Destaques do Sal”.
 - [x] Atualizar a linguagem para atender bairros, moradores e visitantes durante todo o ano.
+- [x] Manter Destaques em carrossel com um estabelecimento por slide.
+- [x] Exibir o catálogo de estabelecimentos em duas colunas quando houver espaço suficiente.
+- [x] Permitir cadastrar e exibir a logomarca de cada estabelecimento junto às fotos dos cartões.
+- [x] Validar a composição em celular, tablet e desktop.
+- [x] Manter uma coluna em telas muito estreitas e duas colunas somente a partir de uma largura segura.
+- [x] Validar a grade e o espaço reservado às logomarcas em viewport de tablet.
+- [x] Adicionar uma verificação automatizada dos breakpoints da grade e da área de logomarca dos cartões.
