@@ -40,9 +40,7 @@ describe("perfis, favoritos e confirmação PIX", () => {
     await adminCaller.admin.createCategory({ name: `Categoria PIX ${suffix}`, icon: "Store" });
     const overview = await adminCaller.admin.overview();
     categoryId = overview.categories.find(category => category.name === `Categoria PIX ${suffix}`)!.id;
-    const basicPlan = overview.plans.find(plan => plan.code === "basico")!;
-
-    await ownerCaller.owner.createEstablishment({
+    const registration = await ownerCaller.owner.completeRegistration({
       categoryId,
       name: `Loja PIX ${suffix}`,
       description: "Estabelecimento usado para validar favoritos, propriedade e confirmação de pagamentos PIX.",
@@ -61,6 +59,7 @@ describe("perfis, favoritos e confirmação PIX", () => {
     const establishment = ownerOverview.establishments.find(item => item.name === `Loja PIX ${suffix}`)!;
     establishmentId = establishment.id;
     expect(establishment.isActive).toBe(false);
+    expect(registration.paymentRequestId).toBeTypeOf("number");
 
     await upsertUser({ openId: otherOwnerOpenId, name: "Outro parceiro", email: `other-${suffix}@tonosal.local`, role: "user", lastSignedIn: new Date() });
     let otherOwner = await getUserByOpenId(otherOwnerOpenId);
@@ -71,9 +70,9 @@ describe("perfis, favoritos e confirmação PIX", () => {
     otherOwnerCaller = appRouter.createCaller(context(otherOwner!));
     await expect(otherOwnerCaller.owner.updateEstablishment({ id: establishmentId, name: "Tentativa indevida" })).rejects.toThrow("Você não pode editar este estabelecimento.");
 
-    await ownerCaller.owner.requestPayment({ establishmentId, planId: basicPlan.id, purpose: "assinatura", ownerNote: "Pagamento realizado pelo parceiro." });
     let paymentRequest = (await ownerCaller.owner.overview()).paymentRequests.find(item => item.establishmentId === establishmentId)!;
     expect(paymentRequest.status).toBe("aguardando_pagamento");
+    expect(paymentRequest.id).toBe(registration.paymentRequestId);
 
     await ownerCaller.owner.submitPixProof({ requestId: paymentRequest.id, pixProofUrl: "https://example.com/comprovante.png" });
     paymentRequest = (await ownerCaller.owner.overview()).paymentRequests.find(item => item.id === paymentRequest.id)!;

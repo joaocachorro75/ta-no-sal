@@ -85,3 +85,8 @@
 - [x] Usar confirmação manual do administrador como requisito obrigatório para ativar ou renovar pagamentos PIX.
 - [x] Restringir o portal do parceiro a donos cadastrados ou administradores, preservando um onboarding explícito para novos donos.
 - [x] Cobrir acessos negados de usuário comum, proprietário sem posse do estabelecimento e não administrador.
+- [x] Reunir todos os dados do estabelecimento em um cadastro guiado único do parceiro.
+- [x] Criar automaticamente a solicitação de assinatura básica por PIX ao finalizar o cadastro.
+- [x] Mostrar os dados PIX e orientar o envio do comprovante imediatamente após o cadastro.
+- [x] Manter o novo estabelecimento inativo até a confirmação administrativa do pagamento.
+- [x] Validar o ciclo completo de cadastro, comprovação PIX e ativação pelo administrador.

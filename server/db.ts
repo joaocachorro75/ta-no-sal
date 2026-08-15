@@ -192,7 +192,27 @@ export async function enforceExpiredSubscriptions(now = new Date()) {
 
 export async function createOwnedEstablishment(input: EstablishmentInput, ownerId: number) {
   await promoteUserToOwner(ownerId);
-  await createEstablishment({ ...input, ownerId, isActive: false, isDemo: false });
+  return createEstablishment({ ...input, ownerId, isActive: false, isDemo: false });
+}
+
+export async function completeOwnerRegistration(input: EstablishmentInput, ownerId: number) {
+  await ensureCommercialPlans();
+  const db = await requireDb();
+  const [basicPlan] = await db.select().from(commercialPlans).where(and(eq(commercialPlans.code, "basico"), eq(commercialPlans.isActive, true))).limit(1);
+  if (!basicPlan) throw new Error("O plano básico não está disponível no momento.");
+  const establishmentId = await createOwnedEstablishment(input, ownerId);
+  if (!establishmentId) throw new Error("Não foi possível criar o estabelecimento.");
+  await db.insert(paymentRequests).values({
+    establishmentId,
+    planId: basicPlan.id,
+    purpose: "assinatura",
+    requestedByUserId: ownerId,
+    amountCents: basicPlan.priceCents,
+    status: "aguardando_pagamento",
+    ownerNote: "Solicitação inicial criada automaticamente ao concluir o cadastro.",
+  });
+  const [request] = await db.select({ id: paymentRequests.id }).from(paymentRequests).where(and(eq(paymentRequests.establishmentId, establishmentId), eq(paymentRequests.requestedByUserId, ownerId))).orderBy(desc(paymentRequests.createdAt)).limit(1);
+  return { establishmentId, paymentRequestId: request?.id ?? null, amountCents: basicPlan.priceCents };
 }
 
 export async function updateOwnedEstablishment(input: Partial<EstablishmentInput> & { id: number }, ownerId: number) {
@@ -538,6 +558,7 @@ export async function createEstablishment(input: EstablishmentInput) {
     .where(eq(establishments.slug, input.slug))
     .limit(1);
   if (created) await replaceEstablishmentImages(created.id, images);
+  return created?.id ?? null;
 }
 
 export async function updateEstablishment(input: Partial<EstablishmentInput> & { id: number }) {

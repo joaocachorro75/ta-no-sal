@@ -126,9 +126,9 @@ export const appRouter = router({
         if (!content.length || content.length > 5 * 1024 * 1024) throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: "Envie imagens de até 5 MB." });
         return saveEstablishmentImage({ userId: ctx.user.id, fileName: input.fileName, extension: input.mimeType.split("/")[1], mimeType: input.mimeType, content });
       }),
-    createEstablishment: ownerProcedure.input(establishmentSchema).mutation(({ ctx, input }) => {
+    completeRegistration: ownerProcedure.input(establishmentSchema).mutation(({ ctx, input }) => {
       const parsed = establishmentSchema.parse(input);
-      return db.createOwnedEstablishment({ ...parsed, slug: parsed.slug ? createSlug(parsed.slug) : createSlug(parsed.name) }, ctx.user.id);
+      return db.completeOwnerRegistration({ ...parsed, slug: parsed.slug ? createSlug(parsed.slug) : createSlug(parsed.name) }, ctx.user.id);
     }),
     updateEstablishment: ownerProcedure.input(establishmentSchema.partial().extend({ id: z.number().int().positive() })).mutation(({ ctx, input }) => {
       const { id, slug, name, ...rest } = input;
