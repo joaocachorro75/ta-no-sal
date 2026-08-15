@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { categories, establishments, subscriptions, users } from "../drizzle/schema";
 import { appRouter } from "./routers";
-import { getDb, getUserByOpenId, upsertUser } from "./db";
+import { createOwnerPaymentRequest, getDb, getUserByOpenId, upsertUser } from "./db";
 import type { TrpcContext } from "./_core/context";
 
 const suffix = Date.now();
@@ -40,6 +40,7 @@ describe("perfis, favoritos e confirmação PIX", () => {
     await adminCaller.admin.createCategory({ name: `Categoria PIX ${suffix}`, icon: "Store" });
     const overview = await adminCaller.admin.overview();
     categoryId = overview.categories.find(category => category.name === `Categoria PIX ${suffix}`)!.id;
+    const highlightedPlan = overview.plans.find(plan => plan.code === "semana")!;
     const registration = await ownerCaller.owner.completeRegistration({
       categoryId,
       name: `Loja PIX ${suffix}`,
@@ -82,6 +83,16 @@ describe("perfis, favoritos e confirmação PIX", () => {
     const publicCaller = appRouter.createCaller({ ...context(admin!), user: null });
     expect((await publicCaller.directory.list()).some(item => item.id === establishmentId)).toBe(true);
 
+    await expect(createOwnerPaymentRequest({ establishmentId, planId: paymentRequest.planId, purpose: "assinatura" }, visitorId)).rejects.toThrow("A mensalidade é gerada automaticamente");
+    await ownerCaller.owner.requestHighlight({ establishmentId, planId: highlightedPlan.id, ownerNote: "Quero aparecer em destaque." });
+    let highlightRequest = (await ownerCaller.owner.overview()).paymentRequests.find(item => item.establishmentId === establishmentId && item.purpose === "destaque")!;
+    expect(highlightRequest.status).toBe("aguardando_pagamento");
+    await ownerCaller.owner.submitPixProof({ requestId: highlightRequest.id, pixProofUrl: "https://example.com/comprovante-destaque.png" });
+    highlightRequest = (await ownerCaller.owner.overview()).paymentRequests.find(item => item.id === highlightRequest.id)!;
+    expect(highlightRequest.status).toBe("em_analise");
+    await adminCaller.admin.confirmPaymentRequest({ requestId: highlightRequest.id, adminNote: "Destaque confirmado." });
+    expect((await adminCaller.admin.overview()).featuredSlots.some(slot => slot.establishmentId === establishmentId && slot.planId === highlightedPlan.id && slot.isActive)).toBe(true);
+
     await ownerCaller.account.addFavorite({ establishmentId });
     expect(await ownerCaller.account.favoriteIds()).toContain(establishmentId);
     await ownerCaller.account.removeFavorite({ establishmentId });
@@ -97,6 +108,9 @@ describe("perfis, favoritos e confirmação PIX", () => {
     expect((await publicCaller.directory.list()).some(item => item.id === establishmentId)).toBe(false);
     const [updated] = await db!.select().from(subscriptions).where(eq(subscriptions.id, subscription!.id)).limit(1);
     expect(updated?.status).toBe("atrasado");
+    const renewedOwner = await getUserByOpenId(visitorOpenId);
+    const renewalRequests = (await appRouter.createCaller(context(renewedOwner!)).owner.overview()).paymentRequests.filter(item => item.establishmentId === establishmentId && item.purpose === "assinatura" && item.status === "aguardando_pagamento");
+    expect(renewalRequests).toHaveLength(1);
   });
 });
 

@@ -134,7 +134,7 @@ export const appRouter = router({
       const { id, slug, name, ...rest } = input;
       return db.updateOwnedEstablishment({ id, ...rest, ...(slug ? { slug: createSlug(slug) } : name ? { slug: createSlug(name) } : {}) }, ctx.user.id);
     }),
-    requestPayment: ownerProcedure.input(z.object({ establishmentId: z.number().int().positive(), planId: z.number().int().positive(), purpose: paymentPurposeSchema, ownerNote: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => db.createOwnerPaymentRequest(input, ctx.user.id)),
+    requestHighlight: ownerProcedure.input(z.object({ establishmentId: z.number().int().positive(), planId: z.number().int().positive(), ownerNote: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => db.createOwnerHighlightPaymentRequest(input, ctx.user.id)),
     submitPixProof: ownerProcedure.input(z.object({ requestId: z.number().int().positive(), pixProofUrl: z.string().url().max(1024), ownerNote: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => db.submitPixProof(input, ctx.user.id)),
   }),
   admin: router({

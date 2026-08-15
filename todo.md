@@ -90,3 +90,10 @@
 - [x] Mostrar os dados PIX e orientar o envio do comprovante imediatamente após o cadastro.
 - [x] Manter o novo estabelecimento inativo até a confirmação administrativa do pagamento.
 - [x] Validar o ciclo completo de cadastro, comprovação PIX e ativação pelo administrador.
+- [x] Remover do painel do dono a solicitação manual de PIX para assinatura mensal.
+- [x] Manter a assinatura mensal PIX apenas no encerramento do cadastro inicial e nas renovações automáticas.
+- [x] Disponibilizar planos de Destaque como compra extra apenas dentro do painel do dono autenticado.
+- [x] Validar que o dono não cria mensalidade manual e que o Destaque continua sujeito a confirmação PIX administrativa.
+- [x] Bloquear no backend qualquer solicitação manual de PIX para assinatura mensal feita pelo dono.
+- [x] Definir a renovação da mensalidade somente pela próxima cobrança gerada após o vencimento, sem expor solicitação mensal manual no painel.
+- [x] Cobrir em testes a rejeição de mensalidade manual e a ativação de Destaque somente após confirmação PIX administrativa.
