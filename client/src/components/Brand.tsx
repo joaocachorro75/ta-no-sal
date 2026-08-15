@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
+import { publicAssets } from "@/lib/publicAssets";
 
-const brandIcon = "/manus-storage/to-no-sal-logo_bf6159c7.png";
+const brandIcon = publicAssets.brandLogo;
 
 export function Brand({ className, compact = false }: { className?: string; compact?: boolean }) {
   return (

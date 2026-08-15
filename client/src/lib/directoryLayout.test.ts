@@ -53,7 +53,7 @@ describe("logomarca do parceiro", () => {
 
 describe("hero de descoberta", () => {
   it("usa imagem fotográfica do acervo do projeto e conserva contraste sobre o conteúdo", () => {
-    expect(heroImageUrl).toMatch(/^\/manus-storage\/.+\.png$/);
+    expect(heroImageUrl).toMatch(/^https:\/\/files\.manuscdn\.com\/.+\.png$/);
     expect(heroImageClass).toContain("object-cover");
     expect(heroOverlayClass).toContain("linear-gradient");
   });

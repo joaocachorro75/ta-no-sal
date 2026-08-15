@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const projectRoot = path.resolve(import.meta.dirname, "../../..");
-const iconUrl = "/manus-storage/to-no-sal-app-icon_e1569371.png";
+const iconUrl = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663167288181/XmGhyfjbDLltWEuU.png";
 
 describe("identidade visual de instalação", () => {
   it("configura o ícone personalizado no manifesto PWA", () => {

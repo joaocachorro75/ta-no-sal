@@ -19,7 +19,7 @@ describe("InstallAppButton", () => {
   it("mostra o rótulo curto solicitado antes da instalação", () => {
     render(<InstallAppButton />);
     expect(screen.getByRole("button", { name: /instalar o aplicativo tô no sal/i }).textContent).toContain("Instalar app");
-    expect(screen.getByRole("button").querySelector("img")?.getAttribute("src")).toBe("/manus-storage/to-no-sal-app-icon_e1569371.png");
+    expect(screen.getByRole("button").querySelector("img")?.getAttribute("src")).toBe("https://files.manuscdn.com/user_upload_by_module/session_file/310519663167288181/XmGhyfjbDLltWEuU.png");
   });
 
   it("aciona o prompt PWA quando o navegador o disponibiliza", async () => {

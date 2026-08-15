@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
+import { publicAssets } from "@/lib/publicAssets";
 import { Smartphone } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-const appIconUrl = "/manus-storage/to-no-sal-app-icon_e1569371.png";
+const appIconUrl = publicAssets.appIcon;
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;

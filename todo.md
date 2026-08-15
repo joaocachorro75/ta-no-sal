@@ -157,3 +157,9 @@
 - [ ] Diagnosticar e corrigir a indisponibilidade pública do domínio do EasyPanel após o deploy independente.
 - [x] Fixar a escuta de produção na porta definida pelo EasyPanel, sem fallback para uma porta alternativa.
 - [x] Cobrir a seleção estrita da porta de execução com teste automatizado.
+- [x] Diagnosticar o erro exibido no domínio publicado após a correção da porta.
+- [x] Confirmar a origem da ausência de imagens e estabelecimentos no ambiente de produção.
+- [x] Substituir os ativos visuais internos por URLs públicas acessíveis no EasyPanel.
+- [x] Validar localmente marca, ícone e banner usando as URLs públicas de produção.
+- [x] Substituir referências remanescentes de logos e imagens demo por URLs públicas compatíveis com EasyPanel.
+- [x] Cobrir o fallback de uploads locais sem o proxy manus-storage no EasyPanel.

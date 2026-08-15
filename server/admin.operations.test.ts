@@ -1,5 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
+import { seedDemoDirectory } from "./db";
 import type { TrpcContext } from "./_core/context";
 
 const suffix = Date.now();
@@ -82,12 +83,13 @@ describe("operações administrativas", () => {
   });
 
   it("mantém logomarcas nos parceiros demonstrativos do catálogo público", async () => {
+    await seedDemoDirectory();
     const publicCaller = appRouter.createCaller({ ...createAdminContext(), user: null });
     const publicDirectory = await publicCaller.directory.list();
     const demoPartners = publicDirectory.filter(item => item.isDemo);
 
     expect(demoPartners).toHaveLength(3);
-    expect(demoPartners.every(item => item.logoUrl?.startsWith("/manus-storage/"))).toBe(true);
+    expect(demoPartners.every(item => item.logoUrl?.startsWith("https://files.manuscdn.com/"))).toBe(true);
   });
 });
 
