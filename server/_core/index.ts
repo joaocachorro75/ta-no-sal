@@ -9,6 +9,7 @@ import { serveStatic, setupVite } from "./vite";
 import { getUploadsDirectory } from "../appStorage";
 import { getBeachConditions } from "../beachConditions";
 import { bootstrapDemoDirectoryIfEmpty, enforceExpiredSubscriptions } from "../db";
+import { bootstrapLocalDemoAssets } from "../demoAssetBootstrap";
 import { getRuntimePort } from "./runtimePort";
 
 async function startServer() {
@@ -48,6 +49,11 @@ async function startServer() {
     await setupVite(app, server);
   } else {
     serveStatic(app);
+  }
+
+  const localAssets = await bootstrapLocalDemoAssets();
+  if (localAssets.copied) {
+    console.log(`[Demo] ${localAssets.copied} visual assets copied to the persistent volume`);
   }
 
   const demoBootstrap = await bootstrapDemoDirectoryIfEmpty();

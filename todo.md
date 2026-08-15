@@ -169,3 +169,7 @@
 - [x] Diagnosticar e corrigir a imagem demonstrativa que não carregou no domínio publicado.
 - [x] Republicar as fotos demonstrativas em formato compatível com o CDN e atualizar suas URLs no seed.
 - [x] Cobrir em teste as fotos WebP públicas dos estabelecimentos demonstrativos.
+- [x] Migrar marca, ícone, banner, logotipos e fotos demo para o volume persistente local do EasyPanel.
+- [x] Remover das interfaces e do seed todas as dependências de URLs manus-storage e arquivos externos.
+- [x] Validar localmente que a vitrine demo e os Destaques carregam somente por URLs locais.
+- [ ] Validar que a vitrine demo e os Destaques carregam somente por URLs locais no domínio publicado.
