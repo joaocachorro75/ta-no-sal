@@ -67,6 +67,9 @@ function PartnerContent() {
   const highlightPlans = useMemo(() => data?.plans.filter(plan => plan.code !== "basico") ?? [], [data?.plans]);
   const establishmentById = useMemo(() => new Map(data?.establishments.map(item => [item.id, item]) ?? []), [data?.establishments]);
   const set = <K extends keyof PartnerForm>(key: K, value: PartnerForm[K]) => setForm(current => ({ ...current, [key]: value }));
+  useEffect(() => {
+    document.querySelectorAll<HTMLInputElement>('input[type="number"][required]').forEach(input => input.removeAttribute("required"));
+  }, [editing]);
 
   const uploadFile = async (file: File) => {
     if (!user || !["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) throw new Error("Use JPEG, PNG ou WebP de até 5 MB.");
@@ -114,9 +117,6 @@ function PartnerContent() {
   if (!isOwner) return <div className="mx-auto grid min-h-[70vh] max-w-xl place-items-center py-10 text-center"><section className="w-full rounded-[2rem] bg-white p-8 shadow-sm ring-1 ring-[#0b6976]/10"><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#edf7f5] text-[#0b7e8a]"><Store className="h-6 w-6" /></span><p className="mt-6 text-xs font-extrabold uppercase tracking-[0.16em] text-[#d68d20]">Área do parceiro</p><h1 className="mt-2 font-display text-3xl text-[#063b43]">Quer cadastrar seu estabelecimento?</h1><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#5b7d82]">Ative seu perfil de parceiro para cadastrar e administrar somente os seus locais, gerar o PIX mensal no cadastro e contratar Destaques extras.</p><Button onClick={() => enroll.mutate()} disabled={enroll.isPending} className="mt-6 rounded-full bg-[#073c45] px-5 text-white hover:bg-[#0a5964]">{enroll.isPending && <Loader2 className="h-4 w-4 animate-spin" />}Ativar perfil de parceiro</Button></section></div>;
   if (isLoading || !data) return <div className="grid min-h-[70vh] place-items-center"><Loader2 className="h-7 w-7 animate-spin text-[#0b8793]" /></div>;
   const pixReady = Boolean(data.paymentSettings.pixKey);
-  useEffect(() => {
-    document.querySelectorAll<HTMLInputElement>('input[type="number"][required]').forEach(input => input.removeAttribute("required"));
-  }, [editing]);
   const pendingMonthlyRenewal = data.paymentRequests.find(request => request.purpose === "assinatura" && ["aguardando_pagamento", "em_analise"].includes(request.status));
   const renewalSubscription = pendingMonthlyRenewal ? data.monthlySubscriptions.find(subscription => subscription.establishmentId === pendingMonthlyRenewal.establishmentId) : null;
 
