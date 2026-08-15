@@ -179,21 +179,28 @@ export async function updatePaymentSettings(input: { pixKey?: string | null; rec
 
 export async function enforceExpiredSubscriptions(now = new Date()) {
   const db = await requireDb();
+  const renewalLeadAt = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
   const rows = await db.select({ subscription: subscriptions }).from(subscriptions).innerJoin(commercialPlans, eq(subscriptions.planId, commercialPlans.id)).where(eq(commercialPlans.code, "basico")).orderBy(desc(subscriptions.createdAt));
   const latestByEstablishment = new Map<number, typeof rows[number]["subscription"]>();
   for (const row of rows) if (!latestByEstablishment.has(row.subscription.establishmentId)) latestByEstablishment.set(row.subscription.establishmentId, row.subscription);
+  const renewed: number[] = [];
+  const activeOrPending = Array.from(latestByEstablishment.values()).filter(subscription => subscription.dueAt <= renewalLeadAt && (subscription.status === "pago" || subscription.status === "pendente"));
+  for (const subscription of activeOrPending) {
+    const [existingRenewal] = await db.select({ id: paymentRequests.id }).from(paymentRequests).where(and(eq(paymentRequests.establishmentId, subscription.establishmentId), eq(paymentRequests.purpose, "assinatura"), inArray(paymentRequests.status, ["aguardando_pagamento", "em_analise"]))).limit(1);
+    if (existingRenewal) continue;
+    const [plan] = await db.select().from(commercialPlans).where(eq(commercialPlans.id, subscription.planId)).limit(1);
+    const [establishment] = await db.select({ ownerId: establishments.ownerId }).from(establishments).where(eq(establishments.id, subscription.establishmentId)).limit(1);
+    if (plan && establishment?.ownerId) {
+      await db.insert(paymentRequests).values({ establishmentId: subscription.establishmentId, planId: subscription.planId, purpose: "assinatura", requestedByUserId: establishment.ownerId, amountCents: plan.priceCents, status: "aguardando_pagamento", ownerNote: "Renovação mensal gerada automaticamente. Envie o comprovante até a data de vencimento para manter o estabelecimento ativo." });
+      renewed.push(subscription.establishmentId);
+    }
+  }
   const overdue = Array.from(latestByEstablishment.values()).filter(subscription => subscription.dueAt <= now && (subscription.status === "pago" || subscription.status === "pendente"));
   for (const subscription of overdue) {
     await db.update(subscriptions).set({ status: "atrasado" }).where(eq(subscriptions.id, subscription.id));
     await db.update(establishments).set({ isActive: false }).where(and(eq(establishments.id, subscription.establishmentId), eq(establishments.isDemo, false)));
-    const [existingRenewal] = await db.select({ id: paymentRequests.id }).from(paymentRequests).where(and(eq(paymentRequests.establishmentId, subscription.establishmentId), eq(paymentRequests.purpose, "assinatura"), inArray(paymentRequests.status, ["aguardando_pagamento", "em_analise"]))).limit(1);
-    if (!existingRenewal) {
-      const [plan] = await db.select().from(commercialPlans).where(eq(commercialPlans.id, subscription.planId)).limit(1);
-      const [establishment] = await db.select({ ownerId: establishments.ownerId }).from(establishments).where(eq(establishments.id, subscription.establishmentId)).limit(1);
-      if (plan && establishment?.ownerId) await db.insert(paymentRequests).values({ establishmentId: subscription.establishmentId, planId: subscription.planId, purpose: "assinatura", requestedByUserId: establishment.ownerId, amountCents: plan.priceCents, status: "aguardando_pagamento", ownerNote: "Renovação mensal gerada automaticamente após o vencimento." });
-    }
   }
-  return { suspended: overdue.map(subscription => subscription.establishmentId) };
+  return { renewalCreated: renewed, suspended: overdue.map(subscription => subscription.establishmentId) };
 }
 
 export async function createOwnedEstablishment(input: EstablishmentInput, ownerId: number) {
@@ -229,7 +236,7 @@ export async function updateOwnedEstablishment(input: Partial<EstablishmentInput
 
 export async function getOwnerOverview(ownerId: number) {
   const db = await requireDb();
-  const [establishmentRows, images, planRows, requestRows, settings] = await Promise.all([
+  const [establishmentRows, images, planRows, requestRows, subscriptionRows, settings] = await Promise.all([
     db.select({
       id: establishments.id,
       categoryId: establishments.categoryId,
@@ -250,6 +257,7 @@ export async function getOwnerOverview(ownerId: number) {
     db.select().from(establishmentImages).orderBy(asc(establishmentImages.sortOrder)),
     db.select().from(commercialPlans).where(eq(commercialPlans.isActive, true)).orderBy(asc(commercialPlans.id)),
     db.select().from(paymentRequests).where(eq(paymentRequests.requestedByUserId, ownerId)).orderBy(desc(paymentRequests.createdAt)),
+    db.select({ establishmentId: subscriptions.establishmentId, dueAt: subscriptions.dueAt, status: subscriptions.status }).from(subscriptions).innerJoin(establishments, eq(subscriptions.establishmentId, establishments.id)).innerJoin(commercialPlans, eq(subscriptions.planId, commercialPlans.id)).where(and(eq(establishments.ownerId, ownerId), eq(commercialPlans.code, "basico"))).orderBy(desc(subscriptions.createdAt)),
     getPaymentSettings(),
   ]);
   const imageMap = makeImageMap(images);
@@ -257,6 +265,7 @@ export async function getOwnerOverview(ownerId: number) {
     establishments: establishmentRows.map(row => ({ ...row, images: imageMap.get(row.id) ?? [] })),
     plans: planRows,
     paymentRequests: requestRows,
+    monthlySubscriptions: subscriptionRows,
     paymentSettings: settings,
   };
 }

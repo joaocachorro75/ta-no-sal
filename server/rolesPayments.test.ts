@@ -99,17 +99,32 @@ describe("perfis, favoritos e confirmação PIX", () => {
     expect(await ownerCaller.account.favoriteIds()).not.toContain(establishmentId);
   });
 
-  it("suspende automaticamente estabelecimento não demonstrativo após o vencimento da assinatura", async () => {
+  it("gera renovação antes do vencimento e suspende estabelecimento não demonstrativo somente após o prazo", async () => {
     const db = await getDb();
     const [subscription] = await db!.select().from(subscriptions).where(eq(subscriptions.establishmentId, establishmentId)).limit(1);
     expect(subscription).toBeDefined();
-    await db!.update(subscriptions).set({ dueAt: new Date(Date.now() - 60_000), status: "pago" }).where(eq(subscriptions.id, subscription!.id));
+    await db!.update(subscriptions).set({ dueAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), status: "pago" }).where(eq(subscriptions.id, subscription!.id));
     const publicCaller = appRouter.createCaller({ ...context((await getUserByOpenId(adminOpenId))!), user: null });
-    expect((await publicCaller.directory.list()).some(item => item.id === establishmentId)).toBe(false);
-    const [updated] = await db!.select().from(subscriptions).where(eq(subscriptions.id, subscription!.id)).limit(1);
-    expect(updated?.status).toBe("atrasado");
+    expect((await publicCaller.directory.list()).some(item => item.id === establishmentId)).toBe(true);
     const renewedOwner = await getUserByOpenId(visitorOpenId);
-    const renewalRequests = (await appRouter.createCaller(context(renewedOwner!)).owner.overview()).paymentRequests.filter(item => item.establishmentId === establishmentId && item.purpose === "assinatura" && item.status === "aguardando_pagamento");
+    let renewalRequests = (await appRouter.createCaller(context(renewedOwner!)).owner.overview()).paymentRequests.filter(item => item.establishmentId === establishmentId && item.purpose === "assinatura" && item.status === "aguardando_pagamento");
+    expect(renewalRequests).toHaveLength(1);
+
+    const ownerCaller = appRouter.createCaller(context(renewedOwner!));
+    const adminCaller = appRouter.createCaller(context((await getUserByOpenId(adminOpenId))!));
+    await ownerCaller.owner.submitPixProof({ requestId: renewalRequests[0].id, pixProofUrl: "https://example.com/comprovante-renovacao.png" });
+    await adminCaller.admin.confirmPaymentRequest({ requestId: renewalRequests[0].id, adminNote: "Renovação confirmada." });
+    const allSubscriptions = await db!.select().from(subscriptions).where(eq(subscriptions.establishmentId, establishmentId));
+    const renewedSubscription = allSubscriptions.find(item => item.id !== subscription!.id);
+    expect(renewedSubscription).toBeDefined();
+    expect(renewedSubscription!.dueAt.getTime()).toBeGreaterThan(Date.now() + 20 * 24 * 60 * 60 * 1000);
+    expect((await publicCaller.directory.list()).some(item => item.id === establishmentId)).toBe(true);
+
+    await db!.update(subscriptions).set({ dueAt: new Date(Date.now() - 60_000), status: "pago" }).where(eq(subscriptions.id, renewedSubscription!.id));
+    expect((await publicCaller.directory.list()).some(item => item.id === establishmentId)).toBe(false);
+    const [updated] = await db!.select().from(subscriptions).where(eq(subscriptions.id, renewedSubscription!.id)).limit(1);
+    expect(updated?.status).toBe("atrasado");
+    renewalRequests = (await appRouter.createCaller(context(renewedOwner!)).owner.overview()).paymentRequests.filter(item => item.establishmentId === establishmentId && item.purpose === "assinatura" && item.status === "aguardando_pagamento");
     expect(renewalRequests).toHaveLength(1);
   });
 });

@@ -3,6 +3,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { DirectoryCard } from "@/components/DirectoryCard";
 import { HomeHero } from "@/components/HomeHero";
+import { MonthlyRenewalCard } from "@/pages/PartnerPortal";
 import { Router } from "wouter";
 import { directoryGridClass, directoryTitleClass, featuredSlideClass, partnerLogoClass, partnerLogoImageClass } from "./directoryLayout";
 import { heroImageClass, heroImageUrl, heroOverlayClass, heroSectionClass, heroTitleClass } from "./homePresentation";
@@ -80,5 +81,20 @@ describe("hero de descoberta", () => {
     expect(markup).toContain("Produtos e conveniências locais em Salinópolis");
     expect(markup).toContain("Explorar opções");
     expect(markup).toContain("linear-gradient");
+  });
+});
+
+describe("renovação mensal automática", () => {
+  it("mostra valor, vencimento e envio de comprovante enquanto o pagamento está pendente", () => {
+    const markup = renderToStaticMarkup(createElement(MonthlyRenewalCard, { amountCents: 9900, dueAt: new Date("2026-09-10T12:00:00Z"), status: "aguardando_pagamento", onProof: () => {} }));
+    expect(markup).toContain("R$ 99,00");
+    expect(markup).toContain("10/09/2026");
+    expect(markup).toContain("Enviar comprovante");
+  });
+
+  it("substitui a ação de upload pelo estado de análise após o envio", () => {
+    const markup = renderToStaticMarkup(createElement(MonthlyRenewalCard, { amountCents: 9900, dueAt: new Date("2026-09-10T12:00:00Z"), status: "em_analise", onProof: () => {} }));
+    expect(markup).toContain("Comprovante em análise");
+    expect(markup).not.toContain("Enviar comprovante");
   });
 });

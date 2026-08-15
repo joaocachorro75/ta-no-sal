@@ -35,9 +35,6 @@ const establishmentSchema = z.object({
   images: z.array(imageSchema).max(6).default([]),
 });
 
-const statusSchema = z.enum(["pendente", "pago", "atrasado", "cancelado"]);
-const paymentPurposeSchema = z.enum(["assinatura", "destaque"]);
-
 function secureEquals(left: string, right: string) {
   const leftValue = Buffer.from(left);
   const rightValue = Buffer.from(right);
@@ -179,12 +176,6 @@ export const appRouter = router({
     updatePlan: adminProcedure
       .input(z.object({ id: z.number().int().positive(), priceCents: z.number().int().min(0), isActive: z.boolean() }))
       .mutation(({ input }) => db.updateCommercialPlan(input)),
-    createSubscription: adminProcedure
-      .input(z.object({ establishmentId: z.number().int().positive(), planId: z.number().int().positive(), amountCents: z.number().int().min(0), dueAt: z.coerce.date(), status: statusSchema.default("pendente"), paidAt: z.coerce.date().optional().nullable(), notes: z.string().max(4000).optional().nullable() }))
-      .mutation(({ input }) => db.createSubscription(input)),
-    updateSubscriptionStatus: adminProcedure
-      .input(z.object({ id: z.number().int().positive(), status: statusSchema, paidAt: z.coerce.date().optional().nullable() }))
-      .mutation(({ input }) => db.updateSubscriptionStatus(input)),
     createFeaturedSlot: adminProcedure
       .input(z.object({ establishmentId: z.number().int().positive(), planId: z.number().int().positive(), startsAt: z.coerce.date(), endsAt: z.coerce.date(), displayOrder: z.number().int().min(0).default(0) }))
       .mutation(({ input }) => db.createFeaturedSlot(input)),

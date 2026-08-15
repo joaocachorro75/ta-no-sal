@@ -65,11 +65,11 @@ Depois da publicação, a ativação fica limitada a uma configuração única n
 
 ### Perfis, PIX e assinaturas
 
-O aplicativo oferece três papéis: **usuário**, que pode guardar favoritos em `/conta`; **dono de estabelecimento**, que usa `/parceiro` para cadastrar e editar apenas seus próprios locais, solicitar assinatura ou destaque e enviar comprovante; e **administrador**, que opera tudo em `/admin`.
+O aplicativo oferece três papéis: **usuário**, que pode guardar favoritos em `/conta`; **dono de estabelecimento**, que usa `/parceiro` para cadastrar e editar apenas seus próprios locais, acompanhar a mensalidade automática, contratar Destaques extras e enviar comprovantes; e **administrador**, que opera tudo em `/admin`.
 
-O pagamento ocorre por **PIX com confirmação manual do administrador**. Depois do primeiro acesso administrativo, abra a aba **PIX** em `/admin` e informe o nome do recebedor, a chave PIX e as instruções de pagamento. O parceiro solicita o plano em `/parceiro`, vê os dados PIX, envia o comprovante e aguarda a conferência. Somente o botão **Confirmar pagamento** do administrador ativa ou renova a assinatura, ou libera o período de destaque.
+O pagamento ocorre por **PIX com confirmação manual do administrador**. Depois do primeiro acesso administrativo, abra a aba **PIX** em `/admin` e informe o nome do recebedor, a chave PIX e as instruções de pagamento. A mensalidade inicial é criada automaticamente ao concluir o cadastro; cinco dias antes do vencimento, o sistema cria a próxima cobrança PIX e a exibe ao dono. O parceiro vê os dados PIX, envia o comprovante e aguarda a conferência. Somente o botão **Confirmar pagamento** do administrador ativa ou renova a assinatura, ou libera o período de destaque.
 
-Após o primeiro deploy, crie também uma tarefa diária que faça `POST https://SEU_DOMINIO/api/scheduled/suspend-expired-subscriptions`. Uma frequência adequada é `0 5 * * *`. A rota é idempotente: ela identifica a assinatura básica vencida mais recente de cada estabelecimento, marca-a como atrasada e retira estabelecimentos não demonstrativos da vitrine até uma nova confirmação PIX.
+Após o primeiro deploy, crie também uma tarefa diária que faça `POST https://SEU_DOMINIO/api/scheduled/suspend-expired-subscriptions`. Uma frequência adequada é `0 5 * * *`. A rota é idempotente: ela cria a cobrança de renovação quando faltam até cinco dias, mantém o local ativo até o vencimento e, apenas depois disso, marca a assinatura como atrasada e retira estabelecimentos não demonstrativos da vitrine até uma nova confirmação PIX.
 
 > Antes de ativar a vitrine para o público, entre em `/admin`, cadastre as categorias e crie os estabelecimentos. O primeiro login no EasyPanel usa `ADMIN_EMAIL` e `ADMIN_PASSWORD`; no ambiente gerenciado, a conta proprietária também mantém acesso administrativo via OAuth.
 

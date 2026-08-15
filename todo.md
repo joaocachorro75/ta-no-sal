@@ -97,3 +97,15 @@
 - [x] Bloquear no backend qualquer solicitação manual de PIX para assinatura mensal feita pelo dono.
 - [x] Definir a renovação da mensalidade somente pela próxima cobrança gerada após o vencimento, sem expor solicitação mensal manual no painel.
 - [x] Cobrir em testes a rejeição de mensalidade manual e a ativação de Destaque somente após confirmação PIX administrativa.
+- [x] Gerar automaticamente a cobrança PIX de renovação antes do vencimento da assinatura.
+- [x] Exibir ao dono a pendência de renovação, valor, prazo e status de pagamento sem depender de ação do administrador.
+- [x] Manter o estabelecimento ativo até o vencimento e suspendê-lo somente se a renovação não for confirmada no prazo.
+- [x] Manter o administrador apenas na fila de comprovantes para confirmação, sem lançamento manual de mensalidades.
+- [x] Validar em testes a cobrança antecipada, a ativação por confirmação e a suspensão por inadimplência.
+- [x] Exibir no portal do dono a renovação mensal com valor, prazo, status e envio de comprovante.
+- [x] Restringir o painel administrativo de mensalidades à confirmação ou recusa de comprovantes e à configuração de planos.
+- [x] Cobrir a confirmação de renovação antecipada e o novo vencimento da assinatura em teste automatizado.
+- [x] Exibir um cartão de renovação mensal com valor, vencimento, status e envio de comprovante no portal do dono.
+- [x] Cobrir a renderização do cartão de renovação mensal e sua chamada para comprovante.
+- [x] Adicionar teste de renderização do cartão de renovação mensal com valor, vencimento e botão de comprovante.
+- [x] Validar em teste a troca visual entre cobrança aguardando pagamento e comprovante em análise.

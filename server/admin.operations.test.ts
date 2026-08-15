@@ -7,7 +7,6 @@ const categoryName = `Categoria de teste ${suffix}`;
 const establishmentName = `Parceiro demo de teste ${suffix}`;
 let categoryId: number | null = null;
 let establishmentId: number | null = null;
-let subscriptionId: number | null = null;
 let featuredSlotId: number | null = null;
 
 function createAdminContext(): TrpcContext {
@@ -22,7 +21,7 @@ function createAdminContext(): TrpcContext {
 describe("operações administrativas", () => {
   const caller = appRouter.createCaller(createAdminContext());
 
-  it("administra categoria, parceiro, planos, mensalidade e destaque", async () => {
+  it("administra categoria, parceiro, planos e destaques sem lançar mensalidades manualmente", async () => {
     await caller.admin.createCategory({ name: categoryName, icon: "Store" });
     let overview = await caller.admin.overview();
     const category = overview.categories.find(item => item.name === categoryName);
@@ -71,12 +70,8 @@ describe("operações administrativas", () => {
     await caller.admin.updatePlan({ id: basicPlan.id, priceCents: basicPlan.priceCents + 1, isActive: true });
     await caller.admin.updatePlan({ id: basicPlan.id, priceCents: basicPlan.priceCents, isActive: basicPlan.isActive });
 
-    await caller.admin.createSubscription({ establishmentId, planId: basicPlan.id, amountCents: 9900, dueAt: new Date(), status: "pendente", notes: "Teste automatizado" });
-    overview = await caller.admin.overview();
-    const subscription = overview.subscriptions.find(item => item.establishmentId === establishmentId && item.notes === "Teste automatizado");
-    expect(subscription).toBeDefined();
-    subscriptionId = subscription!.id;
-    await caller.admin.updateSubscriptionStatus({ id: subscriptionId, status: "pago", paidAt: new Date() });
+    expect("createSubscription" in (caller.admin as object)).toBe(false);
+    expect("updateSubscriptionStatus" in (caller.admin as object)).toBe(false);
 
     await caller.admin.createFeaturedSlot({ establishmentId, planId: highlightedPlan.id, startsAt: new Date(), endsAt: new Date(Date.now() + 86400000), displayOrder: 99 });
     overview = await caller.admin.overview();
