@@ -28,16 +28,15 @@ Os comandos de qualidade são `pnpm test`, `pnpm check` e `pnpm build`. As migra
 
 Crie primeiro um serviço **MySQL** no mesmo projeto do EasyPanel. A documentação oficial recomenda copiar a URL de conexão interna em **Credentials** para a aplicação, mantendo o banco privado na rede do projeto.[1]
 
-Depois, crie um serviço **App** e configure-o conforme a tabela seguinte. Para aplicações novas sem `Dockerfile`, o EasyPanel recomenda o builder Railpack; os comandos abaixo tornam a instalação e a inicialização explícitas.[2]
+Depois, crie um serviço **App**. O repositório já contém um `Dockerfile` de produção: ele instala as dependências, gera a interface e o servidor, aplica as migrations do Drizzle antes de iniciar o processo e escuta a porta definida pelo EasyPanel.[2]
 
 | Campo do EasyPanel | Valor |
 | --- | --- |
 | Source | GitHub → `SEU_USUARIO/to-no-sal` → branch `main` |
 | Build Path | `/` |
-| Builder | Railpack |
-| Install Command | `corepack enable && pnpm install --frozen-lockfile` |
-| Build Command | `pnpm build` |
-| Start Command | `pnpm db:migrate && pnpm start` |
+| Builder | Dockerfile |
+| Dockerfile Path | `Dockerfile` |
+| Install / Build / Start Command | Deixe em branco: o Dockerfile já executa essas etapas. |
 | Target Port | `3000` |
 | Replicas | `1` durante a primeira versão |
 
@@ -53,7 +52,11 @@ No campo **Environment**, cadastre as variáveis abaixo. Valores reais devem ser
 | `UPLOADS_DIR` | Use `/data/uploads`. |
 | `PORT` | Use `3000`. |
 
+> O valor de `DATABASE_URL` deve usar a conexão **interna** do serviço MySQL do EasyPanel, no formato `mysql://USUARIO:SENHA@HOST_INTERNO:3306/NOME_DO_BANCO`. Não use uma URL de banco do ambiente de desenvolvimento.
+
 Em **Storage**, adicione um volume e monte-o em `/data/uploads`. O EasyPanel alerta que o sistema de arquivos do contêiner pode ser perdido quando o serviço é recriado; por isso, o volume é necessário para preservar as fotos carregadas pelo painel.[3]
+
+O volume guarda as fotos enviadas pelos parceiros e o último snapshot de ondas e maré quando o armazenamento gerenciado não está configurado. Não monte o volume em `/app`: use exclusivamente `/data/uploads`, que corresponde ao valor de `UPLOADS_DIR`.
 
 Por fim, crie um domínio, configure a porta interna `3000` e faça o primeiro deploy. O EasyPanel oferece **Enable Auto Deploy** quando a origem é GitHub, para que novos pushes na branch configurada disparem a atualização da aplicação.[4]
 
@@ -73,7 +76,18 @@ Após o primeiro deploy, crie também uma tarefa diária que faça `POST https:/
 
 > Antes de ativar a vitrine para o público, entre em `/admin`, cadastre as categorias e crie os estabelecimentos. O primeiro login no EasyPanel usa `ADMIN_EMAIL` e `ADMIN_PASSWORD`; no ambiente gerenciado, a conta proprietária também mantém acesso administrativo via OAuth.
 
-O banco da primeira instalação começa **sem estabelecimentos fictícios**. Dessa forma, a vitrine pública só passa a exibir informações fornecidas e aprovadas pelos próprios parceiros locais.
+O banco da primeira instalação começa **sem estabelecimentos fictícios**. Os estabelecimentos e imagens demonstrativos vistos no ambiente de desenvolvimento pertencem a outro banco e usam URLs de armazenamento gerenciado; eles não são copiados para o MySQL nem para o volume do EasyPanel. Depois da primeira publicação, entre em `/admin`, configure a chave PIX, crie as categorias e cadastre ou envie novamente as fotos dos estabelecimentos que devem aparecer na vitrine de produção.
+
+### Checklist do primeiro deploy
+
+| Etapa | Ação necessária no EasyPanel |
+| --- | --- |
+| Banco | Criar o serviço MySQL e informar a URL interna em `DATABASE_URL`. |
+| Credenciais | Definir `JWT_SECRET`, `ADMIN_EMAIL` e `ADMIN_PASSWORD`. |
+| Arquivos | Criar um volume persistente montado em `/data/uploads` e definir `UPLOADS_DIR=/data/uploads`. |
+| Aplicação | Usar o builder **Dockerfile**, porta `3000` e deixar comandos personalizados vazios. |
+| Dados iniciais | O Dockerfile executa `pnpm db:migrate`; depois, cadastrar categorias, PIX e estabelecimentos pelo painel `/admin`. |
+| Imagens | Reenviar as fotos/logomarcas desejadas pelo painel administrativo; elas passarão a ser gravadas no volume. |
 
 ## Fluxo de publicação
 

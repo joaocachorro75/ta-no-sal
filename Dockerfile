@@ -10,4 +10,4 @@ RUN npm install -g corepack@latest \
 
 ENV NODE_ENV=production
 
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "corepack pnpm db:migrate && exec node dist/index.js"]

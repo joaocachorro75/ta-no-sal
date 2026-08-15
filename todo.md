@@ -138,3 +138,7 @@
 - [x] Criar Dockerfile de produção no diretório raiz para o build exigido pelo EasyPanel.
 - [x] Garantir que o Dockerfile instale dependências, compile frontend e servidor e inicie o artefato de produção.
 - [x] Validar localmente o comando de build que será executado na imagem do EasyPanel.
+- [x] Documentar as variáveis de ambiente e o banco MySQL necessários para o Tô no Sal no EasyPanel.
+- [x] Preparar a execução de migrações do Drizzle no início da implantação de produção.
+- [x] Configurar caminho persistente para uploads locais quando o armazenamento S3 não estiver disponível.
+- [x] Explicar como dados demonstrativos e imagens existentes se comportam no banco de produção.
