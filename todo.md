@@ -142,3 +142,5 @@
 - [x] Preparar a execução de migrações do Drizzle no início da implantação de produção.
 - [x] Configurar caminho persistente para uploads locais quando o armazenamento S3 não estiver disponível.
 - [x] Explicar como dados demonstrativos e imagens existentes se comportam no banco de produção.
+- [x] Documentar as variáveis OAuth necessárias para usuários e parceiros no EasyPanel.
+- [ ] Validar o redirecionamento de login e a URL pública autorizada no ambiente publicado.

@@ -51,8 +51,13 @@ No campo **Environment**, cadastre as variáveis abaixo. Valores reais devem ser
 | `ADMIN_PASSWORD` | Senha forte usada para entrar em `/admin`. |
 | `UPLOADS_DIR` | Use `/data/uploads`. |
 | `PORT` | Use `3000`. |
+| `OAUTH_SERVER_URL` | Use `https://api.manus.im`. É obrigatório para concluir o login OAuth. |
+| `VITE_OAUTH_PORTAL_URL` | Use `https://manus.im`. É a página para onde o botão de entrar direciona o visitante. |
+| `VITE_APP_ID` | Use `aQYTuckTfwpmLXgjczdNeS`. Identificador público do aplicativo no fluxo OAuth. |
 
 > O valor de `DATABASE_URL` deve usar a conexão **interna** do serviço MySQL do EasyPanel, no formato `mysql://USUARIO:SENHA@HOST_INTERNO:3306/NOME_DO_BANCO`. Não use uma URL de banco do ambiente de desenvolvimento.
+
+> Depois de cadastrar as três variáveis OAuth e publicar, teste o login em uma janela anônima. O retorno autorizado deve apontar para `https://SEU_DOMINIO/api/oauth/callback`. Se o provedor OAuth recusar o domínio, envie a mensagem de erro: será necessário autorizar esse callback externo na configuração do aplicativo OAuth.
 
 Em **Storage**, adicione um volume e monte-o em `/data/uploads`. O EasyPanel alerta que o sistema de arquivos do contêiner pode ser perdido quando o serviço é recriado; por isso, o volume é necessário para preservar as fotos carregadas pelo painel.[3]
 
