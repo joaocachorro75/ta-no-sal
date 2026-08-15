@@ -126,3 +126,4 @@
 - [x] Direcionar o visitante sem sessão ao login antes do cadastro e o parceiro autenticado ao seu painel.
 - [x] Exibir orientação clara para usuário autenticado que ainda não ativou o perfil de parceiro.
 - [x] Cobrir em testes os destinos da nova jornada de cadastro de estabelecimento.
+- [x] Simplificar o rótulo público de “Instale o app do Sal” para “Instalar app”.
