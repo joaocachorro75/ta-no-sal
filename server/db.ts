@@ -15,6 +15,12 @@ import {
   users,
 } from "../drizzle/schema";
 
+const demoAssetMappings = {
+  "mare-alta-surf-cafe": { logoUrl: demoEstablishmentAssets.mareAltaLogo, images: [demoEstablishmentAssets.surfCafePhoto, demoEstablishmentAssets.acaiBowlPhoto] },
+  "acai-da-vela": { logoUrl: demoEstablishmentAssets.acaiLogo, images: [demoEstablishmentAssets.acaiBowlPhoto, demoEstablishmentAssets.surfCafePhoto] },
+  "mercado-pe-na-areia": { logoUrl: demoEstablishmentAssets.mercadoLogo, images: [demoEstablishmentAssets.mercadoPhoto, demoEstablishmentAssets.surfCafePhoto] },
+} as const;
+
 let _db: ReturnType<typeof drizzle> | null = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
@@ -751,6 +757,30 @@ export async function seedDemoDirectory() {
 
 export function shouldBootstrapDemoDirectory(establishmentCount: number) {
   return establishmentCount === 0;
+}
+
+export function isDemoAssetSyncCandidate(input: { slug: string; isDemo: boolean }) {
+  return input.isDemo && input.slug in demoAssetMappings;
+}
+
+export async function syncExistingDemoDirectoryAssets() {
+  const db = await requireDb();
+  const slugs = Object.keys(demoAssetMappings);
+  const existing = await db
+    .select({ id: establishments.id, slug: establishments.slug, isDemo: establishments.isDemo })
+    .from(establishments)
+    .where(inArray(establishments.slug, slugs));
+
+  let updated = 0;
+  for (const establishment of existing) {
+    if (!isDemoAssetSyncCandidate(establishment)) continue;
+    const assets = demoAssetMappings[establishment.slug as keyof typeof demoAssetMappings];
+    await db.update(establishments).set({ logoUrl: assets.logoUrl, updatedAt: new Date() }).where(eq(establishments.id, establishment.id));
+    await replaceEstablishmentImages(establishment.id, assets.images.map((imageUrl, sortOrder) => ({ imageUrl, altText: `Imagem demonstrativa ${sortOrder + 1}` })));
+    updated += 1;
+  }
+
+  return { updated };
 }
 
 export async function bootstrapDemoDirectoryIfEmpty() {

@@ -173,3 +173,6 @@
 - [x] Remover das interfaces e do seed todas as dependências de URLs manus-storage e arquivos externos.
 - [x] Validar localmente que a vitrine demo e os Destaques carregam somente por URLs locais.
 - [ ] Validar que a vitrine demo e os Destaques carregam somente por URLs locais no domínio publicado.
+- [x] Diagnosticar e corrigir o bootstrap de dados e ativos demo ausente na última publicação local.
+- [x] Atualizar registros demo já existentes para URLs locais sem modificar estabelecimentos reais.
+- [x] Cobrir a seleção de registros demo na sincronização de ativos locais.

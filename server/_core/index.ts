@@ -8,7 +8,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { getUploadsDirectory } from "../appStorage";
 import { getBeachConditions } from "../beachConditions";
-import { bootstrapDemoDirectoryIfEmpty, enforceExpiredSubscriptions } from "../db";
+import { bootstrapDemoDirectoryIfEmpty, enforceExpiredSubscriptions, syncExistingDemoDirectoryAssets } from "../db";
 import { bootstrapLocalDemoAssets } from "../demoAssetBootstrap";
 import { getRuntimePort } from "./runtimePort";
 
@@ -54,6 +54,11 @@ async function startServer() {
   const localAssets = await bootstrapLocalDemoAssets();
   if (localAssets.copied) {
     console.log(`[Demo] ${localAssets.copied} visual assets copied to the persistent volume`);
+  }
+
+  const demoAssetSync = await syncExistingDemoDirectoryAssets();
+  if (demoAssetSync.updated) {
+    console.log(`[Demo] ${demoAssetSync.updated} existing demo entries migrated to local asset URLs`);
   }
 
   const demoBootstrap = await bootstrapDemoDirectoryIfEmpty();
