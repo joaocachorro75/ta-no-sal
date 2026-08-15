@@ -114,4 +114,4 @@
 - [x] Calcular disponibilidade diária de Destaques por período e impedir reservas além da capacidade.
 - [ ] Permitir que o dono escolha datas disponíveis para o Destaque e gere o PIX correspondente.
 - [x] Ativar o Destaque agendado automaticamente após confirmação do PIX, respeitando as vagas do período.
-- [ ] Validar cadastro sem coordenadas, limite diário, bloqueio de excesso e confirmação do agendamento.
+- [x] Validar cadastro sem coordenadas, limite diário, bloqueio de excesso e confirmação do agendamento.

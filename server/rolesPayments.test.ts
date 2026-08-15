@@ -37,6 +37,7 @@ describe("perfis, favoritos e confirmação PIX", () => {
     await ownerCaller.owner.enroll();
     const promotedOwner = await getUserByOpenId(visitorOpenId);
     ownerCaller = appRouter.createCaller(context(promotedOwner!));
+    await adminCaller.admin.updatePaymentSettings({ dailyHighlightCapacity: 5 });
     await adminCaller.admin.createCategory({ name: `Categoria PIX ${suffix}`, icon: "Store" });
     const overview = await adminCaller.admin.overview();
     categoryId = overview.categories.find(category => category.name === `Categoria PIX ${suffix}`)!.id;
@@ -84,7 +85,8 @@ describe("perfis, favoritos e confirmação PIX", () => {
     expect((await publicCaller.directory.list()).some(item => item.id === establishmentId)).toBe(true);
 
     await expect(createOwnerPaymentRequest({ establishmentId, planId: paymentRequest.planId, purpose: "assinatura" }, visitorId)).rejects.toThrow("A mensalidade é gerada automaticamente");
-    await ownerCaller.owner.requestHighlight({ establishmentId, planId: highlightedPlan.id, startsAt: new Date(Date.now() + 24 * 60 * 60 * 1000), ownerNote: "Quero aparecer em destaque." });
+    const highlightStart = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await ownerCaller.owner.requestHighlight({ establishmentId, planId: highlightedPlan.id, startsAt: highlightStart, ownerNote: "Quero aparecer em destaque." });
     let highlightRequest = (await ownerCaller.owner.overview()).paymentRequests.find(item => item.establishmentId === establishmentId && item.purpose === "destaque")!;
     expect(highlightRequest.status).toBe("aguardando_pagamento");
     await ownerCaller.owner.submitPixProof({ requestId: highlightRequest.id, pixProofUrl: "https://example.com/comprovante-destaque.png" });
@@ -92,6 +94,8 @@ describe("perfis, favoritos e confirmação PIX", () => {
     expect(highlightRequest.status).toBe("em_analise");
     await adminCaller.admin.confirmPaymentRequest({ requestId: highlightRequest.id, adminNote: "Destaque confirmado." });
     expect((await adminCaller.admin.overview()).featuredSlots.some(slot => slot.establishmentId === establishmentId && slot.planId === highlightedPlan.id && slot.isActive)).toBe(true);
+    await adminCaller.admin.updatePaymentSettings({ dailyHighlightCapacity: 1 });
+    await expect(ownerCaller.owner.requestHighlight({ establishmentId, planId: highlightedPlan.id, startsAt: highlightStart, ownerNote: "Tentativa além da capacidade." })).rejects.toThrow("Não há mais vagas de Destaque disponíveis");
 
     await ownerCaller.account.addFavorite({ establishmentId });
     expect(await ownerCaller.account.favoriteIds()).toContain(establishmentId);
