@@ -166,3 +166,6 @@
 - [x] Popular o banco vazio do EasyPanel com categorias, estabelecimentos e Destaque demonstrativos identificados.
 - [x] Garantir que o bootstrap demo não altere nem substitua dados reais existentes.
 - [x] Atualizar a documentação para explicar a remoção dos demos após os primeiros cadastros reais.
+- [x] Diagnosticar e corrigir a imagem demonstrativa que não carregou no domínio publicado.
+- [x] Republicar as fotos demonstrativas em formato compatível com o CDN e atualizar suas URLs no seed.
+- [x] Cobrir em teste as fotos WebP públicas dos estabelecimentos demonstrativos.

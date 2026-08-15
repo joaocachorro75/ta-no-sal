@@ -90,6 +90,7 @@ describe("operações administrativas", () => {
 
     expect(demoPartners).toHaveLength(3);
     expect(demoPartners.every(item => item.logoUrl?.startsWith("https://files.manuscdn.com/"))).toBe(true);
+    expect(demoPartners.every(item => item.images[0]?.startsWith("https://files.manuscdn.com/") && item.images[0].endsWith(".webp"))).toBe(true);
   });
 });
 
