@@ -230,6 +230,22 @@ function AdminContent() {
   useEffect(() => {
     if (paymentSettings) setPixForm({ pixKey: paymentSettings.pixKey ?? "", recipientName: paymentSettings.recipientName ?? "", instructions: paymentSettings.instructions ?? "", dailyHighlightCapacity: String(paymentSettings.dailyHighlightCapacity ?? 5) });
   }, [paymentSettings]);
+  useEffect(() => {
+    const form = Array.from(document.querySelectorAll<HTMLFormElement>("form")).find(candidate => candidate.textContent?.includes("Dados PIX"));
+    const submitButton = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+    if (!form || !submitButton || form.querySelector("[data-daily-highlight-capacity]")) return;
+    const field = document.createElement("label");
+    field.dataset.dailyHighlightCapacity = "true";
+    field.className = "grid gap-2 text-sm font-semibold text-inherit";
+    field.innerHTML = '<span>Vagas diárias de Destaque</span><input type="number" min="1" max="100" class="h-10 w-full rounded-md border border-white/25 bg-white/10 px-3 text-sm text-white" />';
+    const input = field.querySelector<HTMLInputElement>("input");
+    if (!input) return;
+    input.value = pixForm.dailyHighlightCapacity;
+    const onChange = () => setPixForm(current => ({ ...current, dailyHighlightCapacity: input.value }));
+    input.addEventListener("input", onChange);
+    submitButton.parentElement?.insertBefore(field, submitButton);
+    return () => { input.removeEventListener("input", onChange); field.remove(); };
+  }, [pixForm.dailyHighlightCapacity, paymentSettings]);
 
   const planById = useMemo(() => new Map(data?.plans.map(plan => [plan.id, plan]) ?? []), [data?.plans]);
   const establishmentById = useMemo(() => new Map(data?.establishments.map(establishment => [establishment.id, establishment]) ?? []), [data?.establishments]);

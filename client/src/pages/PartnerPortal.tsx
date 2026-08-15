@@ -70,6 +70,23 @@ function PartnerContent() {
   useEffect(() => {
     document.querySelectorAll<HTMLInputElement>('input[type="number"][required]').forEach(input => input.removeAttribute("required"));
   }, [editing]);
+  useEffect(() => {
+    const form = document.querySelector<HTMLFormElement>("#destaque-extra form");
+    const target = Array.from(form?.querySelectorAll("label") ?? []).find(label => label.textContent?.includes("Observação para o administrador"));
+    if (!form || !target || form.querySelector("[data-highlight-start-at]")) return;
+    const field = document.createElement("label");
+    field.dataset.highlightStartAt = "true";
+    field.className = "grid gap-2 text-sm font-semibold text-inherit";
+    field.innerHTML = '<span>Data de início</span><input type="date" class="h-10 w-full rounded-md border border-white/25 bg-white/10 px-3 text-sm text-white" />';
+    const input = field.querySelector<HTMLInputElement>("input");
+    if (!input) return;
+    input.min = new Date().toISOString().slice(0, 10);
+    input.value = highlightStartAt;
+    const onChange = () => setHighlightStartAt(input.value);
+    input.addEventListener("change", onChange);
+    target.parentElement?.insertBefore(field, target);
+    return () => { input.removeEventListener("change", onChange); field.remove(); };
+  }, [data, highlightStartAt]);
 
   const uploadFile = async (file: File) => {
     if (!user || !["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) throw new Error("Use JPEG, PNG ou WebP de até 5 MB.");
