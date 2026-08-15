@@ -35,6 +35,8 @@ const menuItems = [
   { icon: MapPinned, label: "Destaques", path: "/admin?aba=destaques" },
 ];
 
+export type DashboardMenuItem = { icon: typeof LayoutDashboard; label: string; path: string };
+
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
@@ -43,9 +45,11 @@ const MAX_WIDTH = 480;
 export default function DashboardLayout({
   children,
   allowUnauthenticated = false,
+  navigation = menuItems,
 }: {
   children: React.ReactNode;
   allowUnauthenticated?: boolean;
+  navigation?: DashboardMenuItem[];
 }) {
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
@@ -93,7 +97,7 @@ export default function DashboardLayout({
         } as CSSProperties
       }
     >
-      <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
+      <DashboardLayoutContent setSidebarWidth={setSidebarWidth} navigation={navigation}>
         {children}
       </DashboardLayoutContent>
     </SidebarProvider>
@@ -103,11 +107,13 @@ export default function DashboardLayout({
 type DashboardLayoutContentProps = {
   children: React.ReactNode;
   setSidebarWidth: (width: number) => void;
+  navigation: DashboardMenuItem[];
 };
 
 function DashboardLayoutContent({
   children,
   setSidebarWidth,
+  navigation,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
@@ -115,7 +121,7 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => item.path === location);
+  const activeMenuItem = navigation.find(item => item.path === location);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -183,7 +189,7 @@ function DashboardLayoutContent({
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
-              {menuItems.map(item => {
+              {navigation.map(item => {
                 const isActive = location === item.path;
                 return (
                   <SidebarMenuItem key={item.path}>

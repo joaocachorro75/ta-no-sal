@@ -27,7 +27,7 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "owner", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -72,6 +72,7 @@ export const establishments = mysqlTable(
     isActive: boolean("isActive").default(true).notNull(),
     isDemo: boolean("isDemo").default(false).notNull(),
     logoUrl: varchar("logoUrl", { length: 1024 }),
+    ownerId: int("ownerId").references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
@@ -79,6 +80,7 @@ export const establishments = mysqlTable(
     slugUnique: uniqueIndex("establishments_slug_unique").on(table.slug),
     categoryIdx: index("establishments_category_idx").on(table.categoryId),
     activeIdx: index("establishments_active_idx").on(table.isActive),
+    ownerIdx: index("establishments_owner_idx").on(table.ownerId),
   }),
 );
 
@@ -134,6 +136,7 @@ export const subscriptions = mysqlTable(
     amountCents: int("amountCents").notNull(),
     dueAt: timestamp("dueAt").notNull(),
     paidAt: timestamp("paidAt"),
+    confirmedByUserId: int("confirmedByUserId").references(() => users.id, { onDelete: "set null" }),
     notes: text("notes"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -141,6 +144,55 @@ export const subscriptions = mysqlTable(
   table => ({
     establishmentIdx: index("subscriptions_establishment_idx").on(table.establishmentId),
     statusIdx: index("subscriptions_status_idx").on(table.status),
+  }),
+);
+
+export const favorites = mysqlTable(
+  "favorites",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    establishmentId: int("establishmentId").notNull().references(() => establishments.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({
+    userIdx: index("favorites_user_idx").on(table.userId),
+    establishmentIdx: index("favorites_establishment_idx").on(table.establishmentId),
+    userEstablishmentUnique: uniqueIndex("favorites_user_establishment_unique").on(table.userId, table.establishmentId),
+  }),
+);
+
+export const paymentSettings = mysqlTable("payment_settings", {
+  id: int("id").primaryKey(),
+  pixKey: varchar("pixKey", { length: 255 }),
+  recipientName: varchar("recipientName", { length: 160 }),
+  instructions: text("instructions"),
+  updatedByUserId: int("updatedByUserId").references(() => users.id, { onDelete: "set null" }),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const paymentRequests = mysqlTable(
+  "payment_requests",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    establishmentId: int("establishmentId").notNull().references(() => establishments.id, { onDelete: "cascade" }),
+    requestedByUserId: int("requestedByUserId").notNull().references(() => users.id, { onDelete: "restrict" }),
+    planId: int("planId").notNull().references(() => commercialPlans.id, { onDelete: "restrict" }),
+    purpose: mysqlEnum("purpose", ["assinatura", "destaque"]).notNull(),
+    status: mysqlEnum("status", ["aguardando_pagamento", "em_analise", "confirmado", "recusado", "cancelado"]).default("aguardando_pagamento").notNull(),
+    amountCents: int("amountCents").notNull(),
+    pixProofUrl: varchar("pixProofUrl", { length: 1024 }),
+    ownerNote: text("ownerNote"),
+    adminNote: text("adminNote"),
+    confirmedByUserId: int("confirmedByUserId").references(() => users.id, { onDelete: "set null" }),
+    confirmedAt: timestamp("confirmedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => ({
+    establishmentIdx: index("payment_requests_establishment_idx").on(table.establishmentId),
+    requesterIdx: index("payment_requests_requester_idx").on(table.requestedByUserId),
+    statusIdx: index("payment_requests_status_idx").on(table.status),
   }),
 );
 
@@ -176,3 +228,5 @@ export type EstablishmentImage = typeof establishmentImages.$inferSelect;
 export type CommercialPlan = typeof commercialPlans.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type FeaturedSlot = typeof featuredSlots.$inferSelect;
+export type Favorite = typeof favorites.$inferSelect;
+export type PaymentRequest = typeof paymentRequests.$inferSelect;

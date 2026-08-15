@@ -1,8 +1,10 @@
+import { useAuth } from "@/_core/hooks/useAuth";
 import { BeachPlaceholder, Brand } from "@/components/Brand";
 import PublicBottomNav from "@/components/PublicBottomNav";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, ChevronLeft, ChevronRight, ImageOff, MapPin, Navigation, Phone, Share2 } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Heart, ImageOff, MapPin, Navigation, Phone, Share2 } from "lucide-react";
+import { startLogin } from "@/const";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
 import { toast } from "sonner";
@@ -13,7 +15,12 @@ function whatsappUrl(value: string) {
 
 export default function EstablishmentDetail() {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
   const { data: establishment, isLoading, isError } = trpc.directory.detail.useQuery({ slug });
+  const { data: favoriteIds = [] } = trpc.account.favoriteIds.useQuery(undefined, { enabled: Boolean(user) });
+  const utils = trpc.useUtils();
+  const addFavorite = trpc.account.addFavorite.useMutation({ onSuccess: () => { utils.account.favoriteIds.invalidate(); toast.success("Adicionado aos favoritos."); } });
+  const removeFavorite = trpc.account.removeFavorite.useMutation({ onSuccess: () => { utils.account.favoriteIds.invalidate(); toast.success("Removido dos favoritos."); } });
   const [activeImage, setActiveImage] = useState(0);
   const gallery = useMemo(() => establishment?.images.slice(0, 6) ?? [], [establishment?.images]);
 
@@ -35,11 +42,16 @@ export default function EstablishmentDetail() {
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${establishment.latitude},${establishment.longitude}`;
   const previous = () => setActiveImage(current => (current - 1 + gallery.length) % gallery.length);
   const next = () => setActiveImage(current => (current + 1) % gallery.length);
+  const isFavorite = favoriteIds.includes(establishment.id);
+  const toggleFavorite = () => {
+    if (!user) return startLogin();
+    if (isFavorite) removeFavorite.mutate({ establishmentId: establishment.id }); else addFavorite.mutate({ establishmentId: establishment.id });
+  };
 
   return (
     <main className="min-h-screen bg-[#f7f3ea] pb-24 text-[#063b43] sm:pb-32">
       <header className="sticky top-0 z-20 border-b border-[#0b6976]/10 bg-[#f7f3ea]/92 backdrop-blur-xl">
-        <div className="container flex h-[4.7rem] items-center justify-between"><Link href="/" aria-label="Voltar ao início"><Brand compact /></Link><Button variant="ghost" size="sm" onClick={() => navigator.share?.({ title: establishment.name, url: window.location.href }).catch(() => toast("Link pronto para compartilhar"))} className="rounded-full text-[#0b6976]"><Share2 className="h-4 w-4" /> <span className="hidden sm:inline">Compartilhar</span></Button></div>
+        <div className="container flex h-[4.7rem] items-center justify-between"><Link href="/" aria-label="Voltar ao início"><Brand compact /></Link><div className="flex items-center gap-1"><Button variant="ghost" size="icon" onClick={toggleFavorite} aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"} className={`rounded-full ${isFavorite ? "text-[#d99023]" : "text-[#0b6976]"}`}><Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} /></Button><Button variant="ghost" size="sm" onClick={() => navigator.share?.({ title: establishment.name, url: window.location.href }).catch(() => toast("Link pronto para compartilhar"))} className="rounded-full text-[#0b6976]"><Share2 className="h-4 w-4" /> <span className="hidden sm:inline">Compartilhar</span></Button></div></div>
       </header>
 
       <div className="container max-w-6xl py-7 sm:py-10">

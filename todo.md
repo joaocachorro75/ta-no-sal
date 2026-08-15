@@ -75,3 +75,13 @@
 - [x] Inspecionar o arquivo final do hero fotográfico para confirmar que não é placeholder ou falha.
 - [x] Cobrir a renderização do hero fotográfico, da sobreposição e da chamada de descoberta.
 - [x] Tornar explícitas as regras de mobile, tablet e desktop no hero e nos títulos dos cartões.
+- [x] Definir três papéis: usuário, dono de estabelecimento e administrador, com permissões separadas.
+- [x] Permitir que usuários cadastrados adicionem e removam estabelecimentos dos favoritos.
+- [x] Criar painel do dono para cadastrar e editar somente seus próprios estabelecimentos.
+- [x] Criar fluxo de assinatura, renovação e solicitação de Destaque por PIX, sujeito à confirmação administrativa.
+- [x] Permitir que o administrador gerencie estabelecimentos, planos, assinaturas, cobranças PIX, destaques e suspensões.
+- [x] Suspender automaticamente estabelecimentos com assinatura vencida ou não renovada.
+- [x] Validar autorização por perfil, favoritos, confirmação PIX e suspensão automática.
+- [x] Usar confirmação manual do administrador como requisito obrigatório para ativar ou renovar pagamentos PIX.
+- [x] Restringir o portal do parceiro a donos cadastrados ou administradores, preservando um onboarding explícito para novos donos.
+- [x] Cobrir acessos negados de usuário comum, proprietário sem posse do estabelecimento e não administrador.

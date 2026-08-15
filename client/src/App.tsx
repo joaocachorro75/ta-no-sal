@@ -9,6 +9,8 @@ import BeachPage from "./pages/BeachPage";
 import EstablishmentDetail from "./pages/EstablishmentDetail";
 import Home from "./pages/Home";
 import MapPage from "./pages/MapPage";
+import Account from "./pages/Account";
+import PartnerPortal from "./pages/PartnerPortal";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -16,6 +18,8 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/admin"} component={Admin} />
+      <Route path={"/conta"} component={Account} />
+      <Route path={"/parceiro"} component={PartnerPortal} />
       <Route path={"/mapa"} component={MapPage} />
       <Route path={"/ondas-e-mare"} component={BeachPage} />
       <Route path={"/estabelecimento/:slug"} component={EstablishmentDetail} />

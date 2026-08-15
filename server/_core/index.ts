@@ -10,6 +10,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { getUploadsDirectory } from "../appStorage";
 import { getBeachConditions } from "../beachConditions";
+import { enforceExpiredSubscriptions } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -45,6 +46,14 @@ async function startServer() {
       return res.json({ ok: true, lastFetchedAt: conditions.lastFetchedAt, source: conditions.source });
     } catch (error) {
       return res.status(502).json({ error: "marine-refresh-failed", message: error instanceof Error ? error.message : "Unknown error" });
+    }
+  });
+  app.post("/api/scheduled/suspend-expired-subscriptions", async (req, res) => {
+    try {
+      const result = await enforceExpiredSubscriptions();
+      return res.json({ ok: true, suspendedEstablishmentIds: result.suspended });
+    } catch (error) {
+      return res.status(500).json({ error: "subscription-suspension-failed", message: error instanceof Error ? error.message : "Unknown error" });
     }
   });
   // tRPC API

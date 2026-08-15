@@ -5,8 +5,11 @@ import {
   commercialPlans,
   establishmentImages,
   establishments,
+  favorites,
   featuredSlots,
   InsertUser,
+  paymentRequests,
+  paymentSettings,
   subscriptions,
   users,
 } from "../drizzle/schema";
@@ -104,14 +107,207 @@ async function requireDb() {
   return db;
 }
 
+type PaymentPurpose = "assinatura" | "destaque";
+type PaymentRequestStatus = "aguardando_pagamento" | "em_analise" | "confirmado" | "recusado" | "cancelado";
+type SubscriptionStatus = "pendente" | "pago" | "atrasado" | "cancelado";
+
+async function isOwnedByUser(establishmentId: number, userId: number) {
+  const db = await requireDb();
+  const [establishment] = await db.select({ id: establishments.id }).from(establishments).where(and(eq(establishments.id, establishmentId), eq(establishments.ownerId, userId))).limit(1);
+  return Boolean(establishment);
+}
+
+export async function promoteUserToOwner(userId: number) {
+  const db = await requireDb();
+  await db.update(users).set({ role: "owner" }).where(and(eq(users.id, userId), eq(users.role, "user")));
+}
+
+export async function getFavoriteIds(userId: number) {
+  const db = await requireDb();
+  const rows = await db.select({ establishmentId: favorites.establishmentId }).from(favorites).where(eq(favorites.userId, userId));
+  return rows.map(row => row.establishmentId);
+}
+
+export async function addFavorite(userId: number, establishmentId: number) {
+  const db = await requireDb();
+  const [establishment] = await db.select({ id: establishments.id }).from(establishments).where(and(eq(establishments.id, establishmentId), eq(establishments.isActive, true))).limit(1);
+  if (!establishment) throw new Error("Estabelecimento indisponível para favoritos.");
+  await db.insert(favorites).values({ userId, establishmentId }).onDuplicateKeyUpdate({ set: { createdAt: new Date() } });
+}
+
+export async function removeFavorite(userId: number, establishmentId: number) {
+  const db = await requireDb();
+  await db.delete(favorites).where(and(eq(favorites.userId, userId), eq(favorites.establishmentId, establishmentId)));
+}
+
+export async function getFavoriteDirectory(userId: number) {
+  const db = await requireDb();
+  const [rows, images] = await Promise.all([
+    db.select({
+      id: establishments.id,
+      name: establishments.name,
+      slug: establishments.slug,
+      description: establishments.description,
+      streetAddress: establishments.streetAddress,
+      neighborhood: establishments.neighborhood,
+      city: establishments.city,
+      latitude: establishments.latitude,
+      longitude: establishments.longitude,
+      isDeliveryOnly: establishments.isDeliveryOnly,
+      isDemo: establishments.isDemo,
+      logoUrl: establishments.logoUrl,
+      categoryName: categories.name,
+      categorySlug: categories.slug,
+      categoryIcon: categories.icon,
+    }).from(favorites).innerJoin(establishments, eq(favorites.establishmentId, establishments.id)).innerJoin(categories, eq(establishments.categoryId, categories.id)).where(and(eq(favorites.userId, userId), eq(establishments.isActive, true))).orderBy(desc(favorites.createdAt)),
+    db.select().from(establishmentImages).orderBy(asc(establishmentImages.sortOrder)),
+  ]);
+  const imageMap = makeImageMap(images);
+  return rows.map(row => ({ ...row, images: imageMap.get(row.id) ?? [] }));
+}
+
+export async function getPaymentSettings() {
+  const db = await requireDb();
+  const [settings] = await db.select().from(paymentSettings).where(eq(paymentSettings.id, 1)).limit(1);
+  return settings ?? { id: 1, pixKey: null, recipientName: null, instructions: null };
+}
+
+export async function updatePaymentSettings(input: { pixKey?: string | null; recipientName?: string | null; instructions?: string | null; updatedByUserId: number }) {
+  const db = await requireDb();
+  await db.insert(paymentSettings).values({ id: 1, ...input }).onDuplicateKeyUpdate({ set: { ...input, updatedAt: new Date() } });
+}
+
+export async function enforceExpiredSubscriptions(now = new Date()) {
+  const db = await requireDb();
+  const rows = await db.select({ subscription: subscriptions }).from(subscriptions).innerJoin(commercialPlans, eq(subscriptions.planId, commercialPlans.id)).where(eq(commercialPlans.code, "basico")).orderBy(desc(subscriptions.createdAt));
+  const latestByEstablishment = new Map<number, typeof rows[number]["subscription"]>();
+  for (const row of rows) if (!latestByEstablishment.has(row.subscription.establishmentId)) latestByEstablishment.set(row.subscription.establishmentId, row.subscription);
+  const overdue = Array.from(latestByEstablishment.values()).filter(subscription => subscription.dueAt <= now && (subscription.status === "pago" || subscription.status === "pendente"));
+  for (const subscription of overdue) {
+    await db.update(subscriptions).set({ status: "atrasado" }).where(eq(subscriptions.id, subscription.id));
+    await db.update(establishments).set({ isActive: false }).where(and(eq(establishments.id, subscription.establishmentId), eq(establishments.isDemo, false)));
+  }
+  return { suspended: overdue.map(subscription => subscription.establishmentId) };
+}
+
+export async function createOwnedEstablishment(input: EstablishmentInput, ownerId: number) {
+  await promoteUserToOwner(ownerId);
+  await createEstablishment({ ...input, ownerId, isActive: false, isDemo: false });
+}
+
+export async function updateOwnedEstablishment(input: Partial<EstablishmentInput> & { id: number }, ownerId: number) {
+  if (!(await isOwnedByUser(input.id, ownerId))) throw new Error("Você não pode editar este estabelecimento.");
+  const { isActive: _isActive, isDemo: _isDemo, ...safeInput } = input;
+  await updateEstablishment(safeInput);
+}
+
+export async function getOwnerOverview(ownerId: number) {
+  const db = await requireDb();
+  const [establishmentRows, images, planRows, requestRows, settings] = await Promise.all([
+    db.select({
+      id: establishments.id,
+      categoryId: establishments.categoryId,
+      categoryName: categories.name,
+      name: establishments.name,
+      slug: establishments.slug,
+      description: establishments.description,
+      whatsapp: establishments.whatsapp,
+      streetAddress: establishments.streetAddress,
+      neighborhood: establishments.neighborhood,
+      city: establishments.city,
+      latitude: establishments.latitude,
+      longitude: establishments.longitude,
+      isDeliveryOnly: establishments.isDeliveryOnly,
+      isActive: establishments.isActive,
+      logoUrl: establishments.logoUrl,
+    }).from(establishments).innerJoin(categories, eq(establishments.categoryId, categories.id)).where(eq(establishments.ownerId, ownerId)).orderBy(asc(establishments.name)),
+    db.select().from(establishmentImages).orderBy(asc(establishmentImages.sortOrder)),
+    db.select().from(commercialPlans).where(eq(commercialPlans.isActive, true)).orderBy(asc(commercialPlans.id)),
+    db.select().from(paymentRequests).where(eq(paymentRequests.requestedByUserId, ownerId)).orderBy(desc(paymentRequests.createdAt)),
+    getPaymentSettings(),
+  ]);
+  const imageMap = makeImageMap(images);
+  return {
+    establishments: establishmentRows.map(row => ({ ...row, images: imageMap.get(row.id) ?? [] })),
+    plans: planRows,
+    paymentRequests: requestRows,
+    paymentSettings: settings,
+  };
+}
+
+export async function createOwnerPaymentRequest(input: { establishmentId: number; planId: number; purpose: PaymentPurpose; ownerNote?: string | null }, ownerId: number) {
+  if (!(await isOwnedByUser(input.establishmentId, ownerId))) throw new Error("Você não pode solicitar pagamento para este estabelecimento.");
+  const db = await requireDb();
+  const [plan] = await db.select().from(commercialPlans).where(and(eq(commercialPlans.id, input.planId), eq(commercialPlans.isActive, true))).limit(1);
+  if (!plan) throw new Error("Plano indisponível.");
+  if (input.purpose === "assinatura" && plan.code !== "basico") throw new Error("Use o plano básico para assinatura.");
+  if (input.purpose === "destaque" && plan.code === "basico") throw new Error("Escolha um plano de destaque.");
+  await db.insert(paymentRequests).values({ ...input, requestedByUserId: ownerId, amountCents: plan.priceCents, status: "aguardando_pagamento" });
+}
+
+export async function submitPixProof(input: { requestId: number; pixProofUrl: string; ownerNote?: string | null }, ownerId: number) {
+  const db = await requireDb();
+  const [request] = await db.select().from(paymentRequests).where(and(eq(paymentRequests.id, input.requestId), eq(paymentRequests.requestedByUserId, ownerId))).limit(1);
+  if (!request) throw new Error("Solicitação de pagamento não encontrada.");
+  if (request.status !== "aguardando_pagamento") throw new Error("Esta solicitação não aceita mais comprovante.");
+  await db.update(paymentRequests).set({ pixProofUrl: input.pixProofUrl, ownerNote: input.ownerNote ?? request.ownerNote, status: "em_analise" }).where(eq(paymentRequests.id, input.requestId));
+}
+
+export async function getAdminPaymentRequests() {
+  const db = await requireDb();
+  return db.select({
+    id: paymentRequests.id,
+    establishmentId: paymentRequests.establishmentId,
+    establishmentName: establishments.name,
+    requesterName: users.name,
+    planId: paymentRequests.planId,
+    purpose: paymentRequests.purpose,
+    status: paymentRequests.status,
+    amountCents: paymentRequests.amountCents,
+    pixProofUrl: paymentRequests.pixProofUrl,
+    ownerNote: paymentRequests.ownerNote,
+    adminNote: paymentRequests.adminNote,
+    confirmedAt: paymentRequests.confirmedAt,
+    createdAt: paymentRequests.createdAt,
+  }).from(paymentRequests).innerJoin(establishments, eq(paymentRequests.establishmentId, establishments.id)).innerJoin(users, eq(paymentRequests.requestedByUserId, users.id)).orderBy(desc(paymentRequests.createdAt));
+}
+
+export async function confirmPaymentRequest(input: { requestId: number; adminNote?: string | null; displayOrder?: number }, adminUserId: number) {
+  const db = await requireDb();
+  const [request] = await db.select().from(paymentRequests).where(eq(paymentRequests.id, input.requestId)).limit(1);
+  if (!request) throw new Error("Solicitação de pagamento não encontrada.");
+  if (request.status !== "em_analise") throw new Error("Confirme somente pagamentos com comprovante enviado.");
+  const [plan] = await db.select().from(commercialPlans).where(eq(commercialPlans.id, request.planId)).limit(1);
+  if (!plan) throw new Error("Plano não encontrado.");
+  const now = new Date();
+  await db.update(paymentRequests).set({ status: "confirmado", adminNote: input.adminNote ?? null, confirmedAt: now, confirmedByUserId: adminUserId }).where(eq(paymentRequests.id, request.id));
+  if (request.purpose === "assinatura") {
+    const dueAt = new Date(now.getTime() + (plan.durationDays ?? 30) * 24 * 60 * 60 * 1000);
+    await db.insert(subscriptions).values({ establishmentId: request.establishmentId, planId: request.planId, status: "pago", amountCents: request.amountCents, dueAt, paidAt: now, confirmedByUserId: adminUserId, notes: input.adminNote ?? null });
+    await db.update(establishments).set({ isActive: true }).where(eq(establishments.id, request.establishmentId));
+  } else {
+    const endsAt = new Date(now.getTime() + (plan.durationDays ?? 1) * 24 * 60 * 60 * 1000);
+    await db.insert(featuredSlots).values({ establishmentId: request.establishmentId, planId: request.planId, startsAt: now, endsAt, displayOrder: input.displayOrder ?? 0, isActive: true });
+  }
+}
+
+export async function rejectPaymentRequest(input: { requestId: number; adminNote?: string | null }, adminUserId: number) {
+  const db = await requireDb();
+  const [request] = await db.select().from(paymentRequests).where(eq(paymentRequests.id, input.requestId)).limit(1);
+  if (!request) throw new Error("Solicitação de pagamento não encontrada.");
+  if (request.status !== "em_analise") throw new Error("Esta solicitação não está em análise.");
+  await db.update(paymentRequests).set({ status: "recusado", adminNote: input.adminNote ?? null, confirmedByUserId: adminUserId, confirmedAt: new Date() }).where(eq(paymentRequests.id, request.id));
+}
+
 export async function ensureCommercialPlans() {
   const db = await requireDb();
   await db.insert(commercialPlans).values([
-    { code: "basico", label: "básico", priceCents: 0, durationDays: null },
+    { code: "basico", label: "básico", priceCents: 0, durationDays: 30 },
     { code: "dia", label: "dia", priceCents: 0, durationDays: 1 },
     { code: "semana", label: "semana", priceCents: 0, durationDays: 7 },
     { code: "mes", label: "mês", priceCents: 0, durationDays: 30 },
   ]).onDuplicateKeyUpdate({ set: { updatedAt: new Date() } });
+  await db.update(commercialPlans).set({ durationDays: 30 }).where(eq(commercialPlans.code, "basico"));
 }
 
 function makeImageMap(rows: { establishmentId: number; imageUrl: string }[]) {
@@ -131,6 +327,7 @@ export async function getPublicCategories() {
 }
 
 export async function getPublicDirectory(input: { search?: string; categorySlug?: string }) {
+  await enforceExpiredSubscriptions();
   const db = await requireDb();
   const conditions = [eq(establishments.isActive, true)];
   if (input.categorySlug) conditions.push(eq(categories.slug, input.categorySlug));
@@ -166,6 +363,7 @@ export async function getPublicDirectory(input: { search?: string; categorySlug?
 }
 
 export async function getPublicFeatured() {
+  await enforceExpiredSubscriptions();
   const db = await requireDb();
   const now = new Date();
   const [rows, images] = await Promise.all([
@@ -205,6 +403,7 @@ export async function getPublicFeatured() {
 }
 
 export async function getPublicEstablishment(slug: string) {
+  await enforceExpiredSubscriptions();
   const db = await requireDb();
   const [establishment] = await db
     .select({
@@ -310,6 +509,7 @@ type EstablishmentInput = {
   isActive: boolean;
   isDemo: boolean;
   logoUrl?: string | null;
+  ownerId?: number | null;
   images: { imageUrl: string; altText?: string | null }[];
 };
 

@@ -8,7 +8,7 @@ import { z } from "zod";
 import * as db from "./db";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { adminProcedure, publicProcedure, router } from "./_core/trpc";
+import { adminProcedure, ownerProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { saveEstablishmentImage } from "./appStorage";
 import { getBeachConditions } from "./beachConditions";
 
@@ -36,6 +36,7 @@ const establishmentSchema = z.object({
 });
 
 const statusSchema = z.enum(["pendente", "pago", "atrasado", "cancelado"]);
+const paymentPurposeSchema = z.enum(["assinatura", "destaque"]);
 
 function secureEquals(left: string, right: string) {
   const leftValue = Buffer.from(left);
@@ -106,8 +107,43 @@ export const appRouter = router({
       return establishment;
     }),
   }),
+  account: router({
+    favoriteIds: protectedProcedure.query(({ ctx }) => db.getFavoriteIds(ctx.user.id)),
+    favorites: protectedProcedure.query(({ ctx }) => db.getFavoriteDirectory(ctx.user.id)),
+    addFavorite: protectedProcedure.input(z.object({ establishmentId: z.number().int().positive() })).mutation(({ ctx, input }) => db.addFavorite(ctx.user.id, input.establishmentId)),
+    removeFavorite: protectedProcedure.input(z.object({ establishmentId: z.number().int().positive() })).mutation(({ ctx, input }) => db.removeFavorite(ctx.user.id, input.establishmentId)),
+  }),
+  owner: router({
+    enroll: protectedProcedure.mutation(async ({ ctx }) => {
+      await db.promoteUserToOwner(ctx.user.id);
+      return { success: true } as const;
+    }),
+    overview: ownerProcedure.query(({ ctx }) => db.getOwnerOverview(ctx.user.id)),
+    uploadImage: ownerProcedure
+      .input(z.object({ fileName: z.string().trim().min(1).max(160), mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]), base64: z.string().min(1).max(7_000_000) }))
+      .mutation(async ({ input, ctx }) => {
+        const content = Buffer.from(input.base64, "base64");
+        if (!content.length || content.length > 5 * 1024 * 1024) throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: "Envie imagens de até 5 MB." });
+        return saveEstablishmentImage({ userId: ctx.user.id, fileName: input.fileName, extension: input.mimeType.split("/")[1], mimeType: input.mimeType, content });
+      }),
+    createEstablishment: ownerProcedure.input(establishmentSchema).mutation(({ ctx, input }) => {
+      const parsed = establishmentSchema.parse(input);
+      return db.createOwnedEstablishment({ ...parsed, slug: parsed.slug ? createSlug(parsed.slug) : createSlug(parsed.name) }, ctx.user.id);
+    }),
+    updateEstablishment: ownerProcedure.input(establishmentSchema.partial().extend({ id: z.number().int().positive() })).mutation(({ ctx, input }) => {
+      const { id, slug, name, ...rest } = input;
+      return db.updateOwnedEstablishment({ id, ...rest, ...(slug ? { slug: createSlug(slug) } : name ? { slug: createSlug(name) } : {}) }, ctx.user.id);
+    }),
+    requestPayment: ownerProcedure.input(z.object({ establishmentId: z.number().int().positive(), planId: z.number().int().positive(), purpose: paymentPurposeSchema, ownerNote: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => db.createOwnerPaymentRequest(input, ctx.user.id)),
+    submitPixProof: ownerProcedure.input(z.object({ requestId: z.number().int().positive(), pixProofUrl: z.string().url().max(1024), ownerNote: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => db.submitPixProof(input, ctx.user.id)),
+  }),
   admin: router({
     overview: adminProcedure.query(() => db.getAdminOverview()),
+    paymentSettings: adminProcedure.query(() => db.getPaymentSettings()),
+    updatePaymentSettings: adminProcedure.input(z.object({ pixKey: z.string().trim().max(255).optional().nullable(), recipientName: z.string().trim().max(160).optional().nullable(), instructions: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => db.updatePaymentSettings({ ...input, updatedByUserId: ctx.user.id })),
+    paymentRequests: adminProcedure.query(() => db.getAdminPaymentRequests()),
+    confirmPaymentRequest: adminProcedure.input(z.object({ requestId: z.number().int().positive(), adminNote: z.string().max(4000).optional().nullable(), displayOrder: z.number().int().min(0).optional() })).mutation(({ ctx, input }) => db.confirmPaymentRequest(input, ctx.user.id)),
+    rejectPaymentRequest: adminProcedure.input(z.object({ requestId: z.number().int().positive(), adminNote: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => db.rejectPaymentRequest(input, ctx.user.id)),
     uploadImage: adminProcedure
       .input(z.object({ fileName: z.string().trim().min(1).max(160), mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]), base64: z.string().min(1).max(7_000_000) }))
       .mutation(async ({ input, ctx }) => {

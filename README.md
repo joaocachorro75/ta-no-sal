@@ -8,7 +8,7 @@ O **Tô no Sal** é uma plataforma web para descobrir estabelecimentos em Salin�
 | --- | --- | --- |
 | Interface | React, TypeScript e Tailwind CSS | Vitrine pública e painel administrativo. |
 | API | Express e tRPC | Catálogo, acesso administrativo, gestão e upload de imagens. |
-| Dados | MySQL e Drizzle ORM | Categorias, estabelecimentos, fotos, planos, mensalidades e destaques. |
+| Dados | MySQL e Drizzle ORM | Perfis, favoritos, categorias, estabelecimentos, fotos, planos, assinaturas, solicitações PIX e destaques. |
 | Arquivos | S3 no ambiente gerenciado ou volume no EasyPanel | Galerias de até seis fotos por estabelecimento. |
 
 ## Desenvolvimento local
@@ -62,6 +62,14 @@ Por fim, crie um domínio, configure a porta interna `3000` e faça o primeiro d
 Após o primeiro deploy, configure uma chamada HTTP recorrente a cada **30 minutos** para `POST https://SEU_DOMINIO/api/scheduled/refresh-marine`. A rota é pública porque a informação exibida é pública; ela respeita o cache de dez minutos, portanto chamadas repetidas não provocam nova consulta à fonte antes desse intervalo. O endpoint retorna a hora da leitura, mantém a última resposta válida por até vinte e quatro horas se a fonte ficar indisponível e salva esse snapshot no volume do aplicativo para sobreviver a reinícios. O EasyPanel documenta tarefas recorrentes por cron e, para aplicações sem Dockerfile, também aponta a alternativa de um serviço externo de agendamento.[5]
 
 Depois da publicação, a ativação fica limitada a uma configuração única no painel de hospedagem: crie uma tarefa com frequência `*/30 * * * *` e requisição `POST` para a rota acima. A partir daí, o processo ocorre sozinho em segundo plano; o administrador não precisa abrir o aplicativo nem apertar qualquer botão.
+
+### Perfis, PIX e assinaturas
+
+O aplicativo oferece três papéis: **usuário**, que pode guardar favoritos em `/conta`; **dono de estabelecimento**, que usa `/parceiro` para cadastrar e editar apenas seus próprios locais, solicitar assinatura ou destaque e enviar comprovante; e **administrador**, que opera tudo em `/admin`.
+
+O pagamento ocorre por **PIX com confirmação manual do administrador**. Depois do primeiro acesso administrativo, abra a aba **PIX** em `/admin` e informe o nome do recebedor, a chave PIX e as instruções de pagamento. O parceiro solicita o plano em `/parceiro`, vê os dados PIX, envia o comprovante e aguarda a conferência. Somente o botão **Confirmar pagamento** do administrador ativa ou renova a assinatura, ou libera o período de destaque.
+
+Após o primeiro deploy, crie também uma tarefa diária que faça `POST https://SEU_DOMINIO/api/scheduled/suspend-expired-subscriptions`. Uma frequência adequada é `0 5 * * *`. A rota é idempotente: ela identifica a assinatura básica vencida mais recente de cada estabelecimento, marca-a como atrasada e retira estabelecimentos não demonstrativos da vitrine até uma nova confirmação PIX.
 
 > Antes de ativar a vitrine para o público, entre em `/admin`, cadastre as categorias e crie os estabelecimentos. O primeiro login no EasyPanel usa `ADMIN_EMAIL` e `ADMIN_PASSWORD`; no ambiente gerenciado, a conta proprietária também mantém acesso administrativo via OAuth.
 
