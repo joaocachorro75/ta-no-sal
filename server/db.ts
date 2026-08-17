@@ -140,7 +140,7 @@ export async function recordLocalSignIn(userId: number) {
   await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, userId));
 }
 
-async function requireDb() {
+export async function requireDb() {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
   return db;

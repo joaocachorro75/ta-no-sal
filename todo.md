@@ -176,3 +176,18 @@
 - [x] Diagnosticar e corrigir o bootstrap de dados e ativos demo ausente na última publicação local.
 - [x] Atualizar registros demo já existentes para URLs locais sem modificar estabelecimentos reais.
 - [x] Cobrir a seleção de registros demo na sincronização de ativos locais.
+- [x] Remover o botão superior de cadastro e alterar o CTA para “Instale nosso Aplicativo”.
+- [x] Atualizar os textos institucionais para “O Aplicativo de Salinas - PA” e “Encontre tudo que quiser”.
+- [x] Criar modelos e migração para planos, anúncios e imagens de imóveis.
+- [x] Criar vitrine de imóveis com aluguel fixo, temporada e venda, além de anúncio pago gerenciado pelo admin.
+- [x] Criar modelos e migração para posts, fotos, curtidas, comentários e aprovação do Mural do Sal.
+- [x] Criar Mural do Sal com controle de comentários por autor, geolocalização opcional e moderação administrativa.
+- [x] Adicionar navegação pública para Imóveis e Mural e validar os novos fluxos responsivos.
+- [x] Remover dados temporários de testes da vitrine e impedir que testes futuros deixem anúncios ou postagens visíveis.
+- [x] Expirar automaticamente os anúncios imobiliários quando terminar o período semanal ou mensal confirmado.
+- [x] Cobrir os ajustes de identidade e instalação com o teste do botão PWA.
+- [x] Aplicar a migração não destrutiva dos módulos de imóveis e Mural ao banco de desenvolvimento.
+- [x] Cobrir em integração o PIX, a ativação e a visibilidade pública de imóveis.
+- [x] Cobrir em integração a aprovação, curtida e comentário moderado do Mural.
+- [x] Validar a limpeza automática de anúncios e postagens criados em testes.
+- [x] Cobrir em teste o encerramento da visibilidade após expirar o plano imobiliário.

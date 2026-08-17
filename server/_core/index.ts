@@ -10,6 +10,7 @@ import { getUploadsDirectory } from "../appStorage";
 import { getBeachConditions } from "../beachConditions";
 import { bootstrapDemoDirectoryIfEmpty, enforceExpiredSubscriptions, syncExistingDemoDirectoryAssets } from "../db";
 import { bootstrapLocalDemoAssets } from "../demoAssetBootstrap";
+import { ensurePropertyListingPlans, expirePropertyListings } from "../properties";
 import { getRuntimePort } from "./runtimePort";
 
 async function startServer() {
@@ -65,6 +66,8 @@ async function startServer() {
   if (demoBootstrap.seeded) {
     console.log("[Demo] Initial showcase directory created for an empty database");
   }
+  await ensurePropertyListingPlans();
+  await expirePropertyListings();
 
   const port = getRuntimePort();
 

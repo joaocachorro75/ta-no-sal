@@ -14,7 +14,7 @@ export function Brand({ className, compact = false }: { className?: string; comp
       {!compact && (
         <div className="leading-none">
           <p className="font-display text-[1.55rem] font-semibold tracking-[-0.06em] text-[#063b43]">Tô no Sal</p>
-          <p className="mt-1 text-[0.6rem] font-bold uppercase tracking-[0.19em] text-[#1692a0]">Salinópolis por perto</p>
+          <p className="mt-1 text-[0.6rem] font-bold uppercase tracking-[0.14em] text-[#1692a0]">O Aplicativo de Salinas - PA</p>
         </div>
       )}
     </div>

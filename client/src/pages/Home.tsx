@@ -16,7 +16,7 @@ type Position = { latitude: number; longitude: number };
 const heroSlides: HeroSlide[] = [
   { eyebrow: "Salinópolis, Pará", title: "O que você precisa,", accent: "mais perto.", description: "Comida, mercado, serviços e conveniência no seu bairro." },
   { eyebrow: "Sua cidade, seu ritmo", title: "Descubra o melhor", accent: "do seu caminho.", description: "Parceiros locais para resolver a rotina sem perder tempo procurando." },
-  { eyebrow: "Guia local", title: "Salinas inteira", accent: "na sua mão.", description: "Use sua localização e encontre opções perto de você." },
+  { eyebrow: "Encontre tudo que quiser", title: "Salinas inteira", accent: "na sua mão.", description: "Use sua localização e encontre opções perto de você." },
 ];
 
 function distanceInKm(origin: Position, destination: { latitude: number; longitude: number }) {
@@ -66,7 +66,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#f7f3ea] pb-24 text-[#063b43] sm:pb-32">
-      <header className="absolute inset-x-0 top-0 z-20"><div className="container flex h-20 items-center justify-between gap-2"><div className="rounded-full bg-white/90 px-3 py-2 shadow-lg shadow-[#063b43]/10 backdrop-blur"><Brand className="[&>div]:hidden sm:[&>div]:block" /></div><div className="flex items-center gap-2"><Link href="/cadastre-estabelecimento" className="inline-flex h-9 items-center gap-2 rounded-full bg-[#f4cf7c] px-3 text-xs font-extrabold text-[#073c45] shadow-lg shadow-[#063b43]/10 transition hover:bg-[#ffe3a0] sm:h-10 sm:px-4 sm:text-sm"><Store className="h-4 w-4" /><span className="hidden sm:inline">Cadastrar estabelecimento</span><span className="sm:hidden">Cadastrar</span></Link><InstallAppButton /></div></div></header>
+      <header className="absolute inset-x-0 top-0 z-20"><div className="container flex h-20 items-center justify-between gap-2"><div className="rounded-full bg-white/90 px-3 py-2 shadow-lg shadow-[#063b43]/10 backdrop-blur"><Brand className="[&>div]:hidden sm:[&>div]:block" /></div><InstallAppButton /></div></header>
 
       <HomeHero currentHero={currentHero} currentSlide={heroSlide} totalSlides={heroSlides.length} onPrevious={() => setHeroSlide(current => (current - 1 + heroSlides.length) % heroSlides.length)} onNext={() => setHeroSlide(current => (current + 1) % heroSlides.length)} onSelect={setHeroSlide} />
 

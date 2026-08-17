@@ -36,5 +36,5 @@ export default function InstallAppButton() {
     if (choice.outcome === "accepted") setPromptEvent(null);
   };
 
-  return <Button onClick={install} variant="outline" size="sm" className="rounded-full border-[#0b6876]/15 bg-white/65 px-3 text-[0.65rem] font-bold text-[#0b6876] backdrop-blur-md hover:bg-white sm:px-3.5 sm:text-xs" aria-label="Instalar o aplicativo Tô no Sal"><img src={appIconUrl} alt="" aria-hidden="true" className="h-4 w-4 rounded-[0.3rem]" /><span>{isInstalled ? "App instalado" : "Instalar app"}</span></Button>;
+  return <Button onClick={install} variant="outline" size="sm" className="rounded-full border-[#0b6876]/15 bg-white/65 px-3 text-[0.65rem] font-bold text-[#0b6876] backdrop-blur-md hover:bg-white sm:px-3.5 sm:text-xs" aria-label="Instalar o aplicativo Tô no Sal"><img src={appIconUrl} alt="" aria-hidden="true" className="h-4 w-4 rounded-[0.3rem]" /><span>{isInstalled ? "App instalado" : "Instale nosso Aplicativo"}</span></Button>;
 }

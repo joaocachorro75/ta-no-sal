@@ -13,6 +13,8 @@ import Account from "./pages/Account";
 import PartnerPortal from "./pages/PartnerPortal";
 import PartnerSignup from "./pages/PartnerSignup";
 import Login from "./pages/Login";
+import Properties, { PropertyAdvertise, PropertyDetail } from "./pages/Properties";
+import Mural, { MuralDetail } from "./pages/Mural";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -26,6 +28,11 @@ function Router() {
       <Route path={"/parceiro"} component={PartnerPortal} />
       <Route path={"/mapa"} component={MapPage} />
       <Route path={"/ondas-e-mare"} component={BeachPage} />
+      <Route path={"/imoveis/anunciar"} component={PropertyAdvertise} />
+      <Route path={"/mural/:id"} component={({ params }: { params: { id: string } }) => <MuralDetail id={Number(params.id)} />} />
+      <Route path={"/mural"} component={Mural} />
+      <Route path={"/imoveis/:slug"} component={({ params }: { params: { slug: string } }) => <PropertyDetail slug={params.slug} />} />
+      <Route path={"/imoveis"} component={Properties} />
       <Route path={"/estabelecimento/:slug"} component={EstablishmentDetail} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

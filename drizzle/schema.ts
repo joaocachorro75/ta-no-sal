@@ -228,6 +228,146 @@ export const featuredSlots = mysqlTable(
   }),
 );
 
+export const propertyListingPlans = mysqlTable(
+  "property_listing_plans",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    code: mysqlEnum("code", ["semana", "mes"]).notNull(),
+    label: varchar("label", { length: 48 }).notNull(),
+    priceCents: int("priceCents").default(0).notNull(),
+    durationDays: int("durationDays").notNull(),
+    isActive: boolean("isActive").default(true).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => ({
+    codeUnique: uniqueIndex("property_listing_plans_code_unique").on(table.code),
+  }),
+);
+
+export const propertyListings = mysqlTable(
+  "property_listings",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    planId: int("planId").references(() => propertyListingPlans.id, { onDelete: "set null" }),
+    title: varchar("title", { length: 180 }).notNull(),
+    slug: varchar("slug", { length: 200 }).notNull(),
+    listingType: mysqlEnum("listingType", ["aluguel_fixo", "temporada", "venda"]).notNull(),
+    description: text("description").notNull(),
+    whatsapp: varchar("whatsapp", { length: 32 }).notNull(),
+    propertyPriceCents: int("propertyPriceCents"),
+    streetAddress: varchar("streetAddress", { length: 255 }),
+    neighborhood: varchar("neighborhood", { length: 120 }),
+    city: varchar("city", { length: 120 }).default("Salinópolis").notNull(),
+    latitude: double("latitude"),
+    longitude: double("longitude"),
+    bedrooms: int("bedrooms"),
+    bathrooms: int("bathrooms"),
+    parkingSpaces: int("parkingSpaces"),
+    status: mysqlEnum("status", ["pendente_pagamento", "em_analise", "ativo", "rejeitado", "inativo"]).default("pendente_pagamento").notNull(),
+    activeUntil: timestamp("activeUntil"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => ({
+    slugUnique: uniqueIndex("property_listings_slug_unique").on(table.slug),
+    userIdx: index("property_listings_user_idx").on(table.userId),
+    statusIdx: index("property_listings_status_idx").on(table.status),
+  }),
+);
+
+export const propertyListingImages = mysqlTable(
+  "property_listing_images",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    propertyListingId: int("propertyListingId").notNull().references(() => propertyListings.id, { onDelete: "cascade" }),
+    imageUrl: varchar("imageUrl", { length: 1024 }).notNull(),
+    altText: varchar("altText", { length: 180 }),
+    sortOrder: int("sortOrder").default(0).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({ propertyIdx: index("property_listing_images_property_idx").on(table.propertyListingId) }),
+);
+
+export const propertyPaymentRequests = mysqlTable(
+  "property_payment_requests",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    propertyListingId: int("propertyListingId").notNull().references(() => propertyListings.id, { onDelete: "cascade" }),
+    requestedByUserId: int("requestedByUserId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    planId: int("planId").notNull().references(() => propertyListingPlans.id, { onDelete: "restrict" }),
+    status: mysqlEnum("status", ["aguardando_pagamento", "em_analise", "confirmado", "recusado", "cancelado"]).default("aguardando_pagamento").notNull(),
+    amountCents: int("amountCents").notNull(),
+    pixProofUrl: varchar("pixProofUrl", { length: 1024 }),
+    ownerNote: text("ownerNote"),
+    adminNote: text("adminNote"),
+    confirmedByUserId: int("confirmedByUserId").references(() => users.id, { onDelete: "set null" }),
+    confirmedAt: timestamp("confirmedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => ({ propertyIdx: index("property_payment_requests_property_idx").on(table.propertyListingId), statusIdx: index("property_payment_requests_status_idx").on(table.status) }),
+);
+
+export const muralPosts = mysqlTable(
+  "mural_posts",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    caption: text("caption").notNull(),
+    allowsComments: boolean("allowsComments").default(true).notNull(),
+    latitude: double("latitude"),
+    longitude: double("longitude"),
+    locationLabel: varchar("locationLabel", { length: 180 }),
+    status: mysqlEnum("status", ["pendente", "aprovado", "recusado"]).default("pendente").notNull(),
+    adminNote: text("adminNote"),
+    reviewedByUserId: int("reviewedByUserId").references(() => users.id, { onDelete: "set null" }),
+    reviewedAt: timestamp("reviewedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => ({ userIdx: index("mural_posts_user_idx").on(table.userId), statusIdx: index("mural_posts_status_idx").on(table.status, table.createdAt) }),
+);
+
+export const muralPostImages = mysqlTable(
+  "mural_post_images",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    muralPostId: int("muralPostId").notNull().references(() => muralPosts.id, { onDelete: "cascade" }),
+    imageUrl: varchar("imageUrl", { length: 1024 }).notNull(),
+    sortOrder: int("sortOrder").default(0).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({ postIdx: index("mural_post_images_post_idx").on(table.muralPostId) }),
+);
+
+export const muralLikes = mysqlTable(
+  "mural_likes",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    muralPostId: int("muralPostId").notNull().references(() => muralPosts.id, { onDelete: "cascade" }),
+    userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({ postIdx: index("mural_likes_post_idx").on(table.muralPostId), uniqueLike: uniqueIndex("mural_likes_unique").on(table.muralPostId, table.userId) }),
+);
+
+export const muralComments = mysqlTable(
+  "mural_comments",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    muralPostId: int("muralPostId").notNull().references(() => muralPosts.id, { onDelete: "cascade" }),
+    userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    status: mysqlEnum("status", ["pendente", "aprovado", "recusado"]).default("pendente").notNull(),
+    reviewedByUserId: int("reviewedByUserId").references(() => users.id, { onDelete: "set null" }),
+    reviewedAt: timestamp("reviewedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({ postIdx: index("mural_comments_post_idx").on(table.muralPostId), statusIdx: index("mural_comments_status_idx").on(table.status) }),
+);
+
 export type Category = typeof categories.$inferSelect;
 export type Establishment = typeof establishments.$inferSelect;
 export type EstablishmentImage = typeof establishmentImages.$inferSelect;
@@ -236,3 +376,11 @@ export type Subscription = typeof subscriptions.$inferSelect;
 export type FeaturedSlot = typeof featuredSlots.$inferSelect;
 export type Favorite = typeof favorites.$inferSelect;
 export type PaymentRequest = typeof paymentRequests.$inferSelect;
+export type PropertyListingPlan = typeof propertyListingPlans.$inferSelect;
+export type PropertyListing = typeof propertyListings.$inferSelect;
+export type PropertyListingImage = typeof propertyListingImages.$inferSelect;
+export type PropertyPaymentRequest = typeof propertyPaymentRequests.$inferSelect;
+export type MuralPost = typeof muralPosts.$inferSelect;
+export type MuralPostImage = typeof muralPostImages.$inferSelect;
+export type MuralLike = typeof muralLikes.$inferSelect;
+export type MuralComment = typeof muralComments.$inferSelect;

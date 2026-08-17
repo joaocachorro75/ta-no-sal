@@ -16,9 +16,9 @@ Object.defineProperty(window, "matchMedia", {
 afterEach(() => cleanup());
 
 describe("InstallAppButton", () => {
-  it("mostra o rótulo curto solicitado antes da instalação", () => {
+  it("mostra a chamada de instalação solicitada antes da instalação", () => {
     render(<InstallAppButton />);
-    expect(screen.getByRole("button", { name: /instalar o aplicativo tô no sal/i }).textContent).toContain("Instalar app");
+    expect(screen.getByRole("button", { name: /instalar o aplicativo tô no sal/i }).textContent).toContain("Instale nosso Aplicativo");
     expect(screen.getByRole("button").querySelector("img")?.getAttribute("src")).toBe("/uploads/system/demo-assets/to-no-sal-app-icon.png");
   });
 

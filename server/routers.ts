@@ -12,6 +12,8 @@ import { adminProcedure, ownerProcedure, protectedProcedure, publicProcedure, ro
 import { saveEstablishmentImage } from "./appStorage";
 import { getBeachConditions } from "./beachConditions";
 import { createLocalOpenId, createLocalSession, hashPassword, verifyPassword } from "./localAuth";
+import * as mural from "./mural";
+import * as properties from "./properties";
 
 const imageSchema = z.object({
   imageUrl: z.string().url(),
@@ -34,6 +36,34 @@ const establishmentSchema = z.object({
   isDemo: z.boolean().default(false),
   logoUrl: z.string().url().max(1024).optional().nullable(),
   images: z.array(imageSchema).max(6).default([]),
+});
+
+const propertyImageSchema = z.object({ imageUrl: z.string().max(1024).startsWith("/uploads/"), altText: z.string().max(180).optional().nullable() });
+const propertyListingSchema = z.object({
+  title: z.string().trim().min(5).max(180),
+  listingType: z.enum(["aluguel_fixo", "temporada", "venda"]),
+  description: z.string().trim().min(20).max(5000),
+  whatsapp: z.string().trim().min(8).max(32),
+  propertyPriceCents: z.number().int().min(0).optional().nullable(),
+  streetAddress: z.string().trim().max(255).optional().nullable(),
+  neighborhood: z.string().trim().max(120).optional().nullable(),
+  city: z.string().trim().min(2).max(120).default("Salinópolis"),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  bedrooms: z.number().int().min(0).max(30).optional().nullable(),
+  bathrooms: z.number().int().min(0).max(30).optional().nullable(),
+  parkingSpaces: z.number().int().min(0).max(30).optional().nullable(),
+  images: z.array(propertyImageSchema).min(1).max(8),
+  planId: z.number().int().positive(),
+});
+
+const muralPostSchema = z.object({
+  caption: z.string().trim().min(1).max(2200),
+  allowsComments: z.boolean().default(true),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  locationLabel: z.string().trim().max(180).optional().nullable(),
+  images: z.array(z.string().max(1024).startsWith("/uploads/")).min(1).max(4),
 });
 
 function secureEquals(left: string, right: string) {
@@ -134,6 +164,40 @@ export const appRouter = router({
       return establishment;
     }),
   }),
+  properties: router({
+    plans: publicProcedure.query(() => properties.getPropertyPlans()),
+    paymentSettings: publicProcedure.query(() => db.getPaymentSettings()),
+    list: publicProcedure.input(z.object({ listingType: z.enum(["aluguel_fixo", "temporada", "venda"]).optional() }).optional()).query(({ input }) => properties.getPublicProperties(input?.listingType)),
+    detail: publicProcedure.input(z.object({ slug: z.string().min(1).max(200) })).query(async ({ input }) => {
+      const property = await properties.getPublicProperty(input.slug);
+      if (!property) throw new TRPCError({ code: "NOT_FOUND", message: "Imóvel não encontrado." });
+      return property;
+    }),
+    mine: protectedProcedure.query(({ ctx }) => properties.getMyPropertyListings(ctx.user.id)),
+    uploadImage: protectedProcedure.input(z.object({ fileName: z.string().trim().min(1).max(160), mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]), base64: z.string().min(1).max(7_000_000) })).mutation(async ({ input, ctx }) => {
+      const content = Buffer.from(input.base64, "base64");
+      if (!content.length || content.length > 5 * 1024 * 1024) throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: "Envie imagens de até 5 MB." });
+      return saveEstablishmentImage({ userId: ctx.user.id, fileName: input.fileName, extension: input.mimeType.split("/")[1], mimeType: input.mimeType, content });
+    }),
+    create: protectedProcedure.input(propertyListingSchema).mutation(({ ctx, input }) => properties.createPropertyListing(ctx.user.id, { ...input, slug: createSlug(input.title) })),
+    submitPixProof: protectedProcedure.input(z.object({ requestId: z.number().int().positive(), pixProofUrl: z.string().max(1024).startsWith("/uploads/"), ownerNote: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => properties.submitPropertyPixProof(ctx.user.id, input)),
+  }),
+  mural: router({
+    feed: publicProcedure.query(({ ctx }) => mural.getMuralFeed(ctx.user?.id)),
+    detail: publicProcedure.input(z.object({ id: z.number().int().positive() })).query(async ({ ctx, input }) => {
+      const post = await mural.getMuralPost(input.id, ctx.user?.id);
+      if (!post) throw new TRPCError({ code: "NOT_FOUND", message: "Publicação não encontrada." });
+      return post;
+    }),
+    uploadImage: protectedProcedure.input(z.object({ fileName: z.string().trim().min(1).max(160), mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]), base64: z.string().min(1).max(7_000_000) })).mutation(async ({ input, ctx }) => {
+      const content = Buffer.from(input.base64, "base64");
+      if (!content.length || content.length > 5 * 1024 * 1024) throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: "Envie imagens de até 5 MB." });
+      return saveEstablishmentImage({ userId: ctx.user.id, fileName: input.fileName, extension: input.mimeType.split("/")[1], mimeType: input.mimeType, content });
+    }),
+    create: protectedProcedure.input(muralPostSchema).mutation(({ ctx, input }) => mural.createMuralPost(ctx.user.id, input)),
+    toggleLike: protectedProcedure.input(z.object({ muralPostId: z.number().int().positive() })).mutation(({ ctx, input }) => mural.toggleMuralLike(ctx.user.id, input.muralPostId)),
+    comment: protectedProcedure.input(z.object({ muralPostId: z.number().int().positive(), body: z.string().trim().min(1).max(600) })).mutation(({ ctx, input }) => mural.createMuralComment(ctx.user.id, input)),
+  }),
   account: router({
     favoriteIds: protectedProcedure.query(({ ctx }) => db.getFavoriteIds(ctx.user.id)),
     favorites: protectedProcedure.query(({ ctx }) => db.getFavoriteDirectory(ctx.user.id)),
@@ -214,6 +278,13 @@ export const appRouter = router({
       .input(z.object({ id: z.number().int().positive(), isActive: z.boolean() }))
       .mutation(({ input }) => db.updateFeaturedSlotStatus(input)),
     seedDemoDirectory: adminProcedure.mutation(() => db.seedDemoDirectory()),
+    propertyOverview: adminProcedure.query(() => properties.getAdminPropertyOverview()),
+    updatePropertyPlan: adminProcedure.input(z.object({ id: z.number().int().positive(), label: z.string().trim().min(3).max(48), priceCents: z.number().int().min(0), isActive: z.boolean() })).mutation(({ input }) => properties.updatePropertyPlan(input)),
+    confirmPropertyPayment: adminProcedure.input(z.object({ requestId: z.number().int().positive(), adminNote: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => properties.confirmPropertyPayment(input.requestId, ctx.user.id, input.adminNote)),
+    rejectPropertyPayment: adminProcedure.input(z.object({ requestId: z.number().int().positive(), adminNote: z.string().max(4000).optional().nullable() })).mutation(({ ctx, input }) => properties.rejectPropertyPayment(input.requestId, ctx.user.id, input.adminNote)),
+    muralModeration: adminProcedure.query(() => mural.getAdminMuralModeration()),
+    reviewMuralPost: adminProcedure.input(z.object({ id: z.number().int().positive(), approved: z.boolean(), adminNote: z.string().max(1200).optional().nullable() })).mutation(({ ctx, input }) => mural.reviewMuralPost(input.id, ctx.user.id, input.approved, input.adminNote)),
+    reviewMuralComment: adminProcedure.input(z.object({ id: z.number().int().positive(), approved: z.boolean() })).mutation(({ ctx, input }) => mural.reviewMuralComment(input.id, ctx.user.id, input.approved)),
   }),
 });
 
